@@ -1,92 +1,348 @@
-# file_saver_ffi
+# File Saver FFI
 
-A Flutter plugin for saving files to device storage using FFI and JNI
+A high-performance Flutter plugin for saving files, images, and videos to device storage using native APIs via FFI (iOS)
+and JNI (Android).
 
-## Getting Started
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-blue.svg)](https://github.com/your-repo/file_saver_ffi)
+[![License](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
-This project is a starting point for a Flutter
-[FFI plugin](https://flutter.dev/to/ffi-package),
-a specialized package that includes native code directly invoked with Dart FFI.
+## Features
 
-## Project structure
+- ⚡ **Native Performance** - FFI (iOS) and JNI (Android) for maximum speed
+- 📁 **Universal File Saving** - Save any file type to device storage with a single method
+- 🖼️ **Image-Specific Handling** - Format validation and album support
+- 🎥 **Video Handling** - Native integration with Photos (iOS) and MediaStore (Android)
+- ⚙️ **Conflict Resolution** - Auto-rename, overwrite, skip, or fail on conflicts
+- 🎯 **Album/Subdirectory Support** - Organize all file types in albums (iOS) or subdirectories (Android)
+- 💾 **Original Quality** - Always saves at original quality, no compression
+- 🔒 **Type-Safe API** - Sealed classes and pattern matching for robust code
+- 📂 **Smart Location Routing** - Files automatically saved to appropriate directories based on type
 
-This template uses the following structure:
+If you want to say thank you, star us on GitHub or like us on pub.dev.
 
-* `src`: Contains the native source code, and a CmakeFile.txt file for building
-  that source code into a dynamic library.
+## Supported Platforms
 
-* `lib`: Contains the Dart code that defines the API of the plugin, and which
-  calls into the native code using `dart:ffi`.
+| Platform    | Minimum Version        | Notes                               |
+|-------------|------------------------|-------------------------------------|
+| **Android** | API 21+ (Android 5.0+) | Scoped storage for Android 10+      |
+| **iOS**     | 14.0+                  | Photos framework with album support |
 
-* platform folders (`android`, `ios`, `windows`, etc.): Contains the build files
-  for building and bundling the native code library with the platform application.
+## Setup
 
-## Building and bundling native code
+### Android Configuration
 
-The `pubspec.yaml` specifies FFI plugins as follows:
+Add to `android/app/src/main/AndroidManifest.xml`:
 
-```yaml
-  plugin:
-    platforms:
-      some_platform:
-        ffiPlugin: true
+```xml
+<!-- Only required for Android 9 (API 28) and below -->
+<uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
 ```
 
-This configuration invokes the native build for the various target platforms
-and bundles the binaries in Flutter applications using these FFI plugins.
+**Note:** Android 10+ (API 29+) uses scoped storage automatically and does not require this permission.
 
-This can be combined with dartPluginClass, such as when FFI is used for the
-implementation of one platform in a federated plugin:
+### iOS Configuration
 
-```yaml
-  plugin:
-    implements: some_other_plugin
-    platforms:
-      some_platform:
-        dartPluginClass: SomeClass
-        ffiPlugin: true
+Add to `ios/Runner/Info.plist`:
+
+#### For Photos Library Access (Required for images/videos)
+
+```xml
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>This app needs permission to save photos and videos to your library</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>This app needs permission to access your photo library</string>
 ```
 
-A plugin can have both FFI and method channels:
+#### For Files App Visibility (Optional for custom files)
 
-```yaml
-  plugin:
-    platforms:
-      some_platform:
-        pluginClass: SomeName
-        ffiPlugin: true
+Files are saved to the Application Documents Directory. To make them visible to users in the Files app, add:
+
+```xml
+
+<key>UIFileSharingEnabled</key>
+<true/>
+
+<key>LSSupportsOpeningDocumentsInPlace</key>
+<true/>
 ```
 
-The native build systems that are invoked by FFI (and method channel) plugins are:
+## Quick Start
 
-* For Android: Gradle, which invokes the Android NDK for native builds.
-  * See the documentation in android/build.gradle.
-* For iOS and MacOS: Xcode, via CocoaPods.
-  * See the documentation in ios/file_saver_ffi.podspec.
-  * See the documentation in macos/file_saver_ffi.podspec.
-* For Linux and Windows: CMake.
-  * See the documentation in linux/CMakeLists.txt.
-  * See the documentation in windows/CMakeLists.txt.
+```dart
+import 'package:file_saver_ffi/file_saver_ffi.dart';
 
-## Binding to native code
+try {
+  // Save image bytes
+  final uri = await FileSaver.instance.saveBytes(
+    bytes: imageBytes,
+    fileName: 'my_image',
+    fileType: ImageType.jpg,
+  );
+  
+    print('Saved to: $uri');
+  } on PermissionDeniedException catch (e) {
+    print('Permission denied: ${e.message}');
+  } on FileSaverException catch (e) {
+    print('Save failed: ${e.message}');
+}
+```
 
-To use the native code, bindings in Dart are needed.
-To avoid writing these by hand, they are generated from the header file
-(`src/file_saver_ffi.h`) by `package:ffigen`.
-Regenerate the bindings by running `dart run ffigen --config ffigen.yaml`.
+## Supported File Types
 
-## Invoking native code
+### Images (12 formats)
 
-Very short-running native functions can be directly invoked from any isolate.
-For example, see `sum` in `lib/file_saver_ffi.dart`.
+`PNG`, `JPG`, `JPEG`, `GIF`, `WebP`, `BMP`, `HEIC`, `HEIF`, `TIFF`, `TIF`, `ICO`, `DNG`
 
-Longer-running functions should be invoked on a helper isolate to avoid
-dropping frames in Flutter applications.
-For example, see `sumAsync` in `lib/file_saver_ffi.dart`.
+```dart
+ImageType.png
+ImageType.jpg
+ImageType.gif
+ImageType.webp
+// ... and more
+```
 
-## Flutter help
+### Videos (12 formats)
 
-For help getting started with Flutter, view our
-[online documentation](https://docs.flutter.dev), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+`MP4`, `3GP`, `WebM`, `M4V`, `MKV`, `MOV`, `AVI`, `FLV`, `WMV`, `HEVC`, `VP9`, `AV1`
 
+```dart
+VideoType.mp4
+VideoType.mov
+VideoType.mkv
+// ... and more
+```
+
+### Audio (11 formats)
+
+`MP3`, `AAC`, `WAV`, `AMR`, `3GP`, `M4A`, `OGG`, `FLAC`, `Opus`, `AIFF`, `CAF`
+
+```dart
+AudioType.mp3
+AudioType.aac
+AudioType.wav
+// ... and more
+```
+
+### Custom File Types
+
+Support any file format by specifying extension and MIME type:
+
+```dart
+CustomFileType(
+  ext: 'pdf',
+  mimeType: 'application/pdf'
+)
+CustomFileType(
+  ext: 'docx', 
+  mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+)
+```
+
+## Conflict Resolution Strategies
+
+Control what happens when a file with the same name already exists:
+
+| Strategy               | Behavior                                       | Use Case                 |
+|------------------------|------------------------------------------------|--------------------------|
+| `autoRename` (default) | Appends (1), (2), etc. to filename             | Safe, prevents data loss |
+| `overwrite`            | Replaces existing file                         | Update existing files    |
+| `fail`                 | Returns `SaveFailure` with "FILE_EXISTS" error | Strict validation        |
+| `skip`                 | Returns `SaveSuccess` with existing file path  | Idempotent saves         |
+
+### Example
+
+```dart
+try {
+  final uri = await FileSaver.instance.saveBytes(
+    bytes: fileBytes,
+    fileName: 'document',
+    fileType: CustomFileType(ext: 'pdf', mimeType: 'application/pdf'),
+    conflictResolution: ConflictResolution.autoRename,
+  );
+  
+    // If "document.pdf" exists, saves as "document (1).pdf"
+    print('Saved to: $uri');
+  } on FileSaverException catch (e) {
+    print('Error: ${e.message}');
+}
+```
+
+## Advanced Usage
+
+### Save with Subdirectory/Album
+
+```dart
+try {
+  final uri = await FileSaver.instance.saveBytes(
+    bytes: videoBytes,
+    fileName: 'vacation_video',
+    fileType: VideoType.mp4,
+    subDir: 'My Vacations', // Creates album on iOS, folder on Android
+  );
+  
+    print('Video saved to: $uri');
+  } on FileSaverException catch (e) {
+    print('Error: ${e.message}');
+}
+```
+
+### Complete Example with Error Handling
+
+```dart
+try {
+  final uri = await FileSaver.instance.saveBytes(
+    bytes: pdfBytes,
+    fileName: 'invoice_${DateTime.now().millisecondsSinceEpoch}',
+    fileType: CustomFileType(ext: 'pdf', mimeType: 'application/pdf'),
+    subDir: 'Invoices',
+    conflictResolution: ConflictResolution.autoRename,
+  );
+  
+    print('✅ Saved successfully!');
+    print('URI: $uri');
+  
+} on PermissionDeniedException catch (e) {
+  print('❌ Permission denied: ${e.message}');
+  // Request permissions
+
+} on FileExistsException catch (e) {
+  print('❌ File already exists: ${e.fileName}');
+  // Handle conflict
+
+} on StorageFullException catch (e) {
+  print('❌ Storage full: ${e.message}');
+  // Show storage full message
+
+} on InvalidFileException catch (e) {
+  print('❌ Invalid file: ${e.message}');
+  // Validate file data
+
+} on FileSaverException catch (e) {
+  print('❌ Save failed: ${e.message}');
+  // Generic error handling
+}
+```
+
+## Platform-Specific Behavior
+
+### File Storage Locations
+
+#### Android
+
+Files are saved to MediaStore collections based on type:
+
+| File Type    | Location              |
+|--------------|-----------------------|
+| Images       | `Pictures/[subDir]/`  |
+| Videos       | `Movies/[subDir]/`    |
+| Audio        | `Music/[subDir]/`     |
+| Custom Files | `Downloads/[subDir]/` |
+
+**URI Format:** `content://media/external/...`
+
+#### iOS
+
+Files are saved to platform-appropriate locations:
+
+| File Type    | Location                                                   |
+|--------------|------------------------------------------------------------|
+| Images       | Photos library album `[subDir]`                            |
+| Videos       | Photos library album `[subDir]`                            |
+| Audio        | Photos library (if supported)                              |
+| Custom Files | `Documents/[subDir]/` (visible in Files app if configured) |
+
+**URI Format:** `ph://` for Photos, `file://` for Documents
+
+### SubDir Parameter
+
+- **iOS:** Creates an album in the Photos app with the specified name
+- **Android:** Creates a folder in the appropriate MediaStore collection
+
+**Example:**
+
+```dart
+// iOS: Creates "My App" album in Photos
+// Android: Creates Pictures/My App/ folder
+subDir: 'My App'
+```
+
+## Error Handling
+
+The library provides specific exception types for different failure scenarios:
+
+| Exception                    | Description                      | Error Code           |
+|------------------------------|----------------------------------|----------------------|
+| `PermissionDeniedException`  | Storage access denied            | `PERMISSION_DENIED`  |
+| `FileExistsException`        | File exists with `fail` strategy | `FILE_EXISTS`        |
+| `StorageFullException`       | Insufficient device storage      | `STORAGE_FULL`       |
+| `InvalidFileException`       | Empty bytes or invalid filename  | `INVALID_FILE`       |
+| `FileIOException`            | File system error                | `FILE_IO`            |
+| `UnsupportedFormatException` | Format not supported on platform | `UNSUPPORTED_FORMAT` |
+| `PlatformException`          | Generic platform-specific error  | `PLATFORM_ERROR`     |
+
+### Handling Errors
+
+```dart
+try {
+  final uri = await FileSaver.instance.saveBytes(...);
+  print('Saved to: $uri');
+
+} on PermissionDeniedException catch (e) {
+    // Request permissions
+
+} on StorageFullException catch (e) {
+  // Show storage full message
+
+} on FileExistsException catch (e) {
+  // File already exists: ${e.fileName}
+
+} on FileSaverException catch (e) {
+  // Generic error handling
+}
+```
+
+## API Reference
+
+### FileSaver
+
+Singleton API class for saving files.
+
+```dart
+Future<Uri> saveBytes({
+  required Uint8List bytes,
+  required String fileName,
+  required FileType fileType,
+  String? subDir,
+  ConflictResolution conflictResolution = ConflictResolution.autoRename,
+})
+
+Throws FileSaverException or subtypes on failure.
+```
+
+### ConflictResolution
+
+Enum for conflict resolution strategies:
+
+```dart
+enum ConflictResolution {
+  autoRename, // Append (1), (2), etc.
+  overwrite, // Replace existing file
+  fail, // Return error
+  skip, // Return existing file path
+}
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Future Features
+* File Input Methods
+* Save from Network URL
+* User-Selected Location Android (SAF), iOS (Document Picker)
+* Custom Path Support
+* Progress Tracking
