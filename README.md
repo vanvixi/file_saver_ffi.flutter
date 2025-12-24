@@ -1,10 +1,16 @@
-# File Saver FFI
+<p align="center">
+  <img alt="cover" src="https://github.com/user-attachments/assets/e6fdc6d2-abcd-49c2-9537-ec960e4cf082" />
+</p>
+
+## File Saver FFI
+<p align="left">
+  <a href="https://pub.dev/packages/file_saver_ffi"><img src="https://img.shields.io/pub/v/file_saver_ffi.svg" alt="Pub"></a>
+  <a href="https://github.com/vanvixi/file_saver_ffi"><img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-blue.svg" alt="Platform"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="License: MIT"></a>
+</p>
 
 A high-performance Flutter plugin for saving files, images, and videos to device storage using native APIs via FFI (iOS)
 and JNI (Android).
-
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-blue.svg)](https://github.com/your-repo/file_saver_ffi)
-[![License](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
 ## Features
 
