@@ -8,10 +8,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class FileSaver(context: Context) {
-    val imageSaver = ImageSaver(context)
-    val videoSaver = VideoSaver(context)
-    val audioSaver = AudioSaver(context)
-    val customFileSaver = CustomFileSaver(context)
+    private val imageSaver = ImageSaver(context)
+    private val videoSaver = VideoSaver(context)
+    private val audioSaver = AudioSaver(context)
+    private val customFileSaver = CustomFileSaver(context)
 
 
     /**
