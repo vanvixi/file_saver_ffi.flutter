@@ -1,5 +1,8 @@
-# FFI bindings configuration for IOS
-# Run with `fvm dart run ffigen --config ffigen.yaml`
+name: FileSaverFfiBindings
+description: |
+  Bindings for iOS `file_saver_ffi.h`.
+
+  Regenerate bindings with `fvm dart run ffigen --config ffigen.yaml`.
 output: 'lib/src/platforms/ios/bindings.g.dart'
 headers:
   entry-points:
