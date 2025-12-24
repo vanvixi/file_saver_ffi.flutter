@@ -1,8 +1,23 @@
 import Foundation
 
 struct FileType {
-    let ext: String
-    let mimeType: String
+
+    var ext: String {
+        didSet {
+            ext = ext.lowercased()
+        }
+    }
+
+    var mimeType: String {
+        didSet {
+            mimeType = mimeType.lowercased()
+        }
+    }
+
+    init(ext: String, mimeType: String) {
+        self.ext = ext.lowercased()
+        self.mimeType = mimeType.lowercased()
+    }
 
     enum Category {
         case image
@@ -12,14 +27,19 @@ struct FileType {
     }
 
     var category: Category {
-        if mimeType.starts(with: "image/") {
+        if mimeType.hasPrefix("image/") {
             return .image
-        } else if mimeType.starts(with: "video/") {
+        } else if mimeType.hasPrefix("video/") {
             return .video
-        } else if mimeType.starts(with: "audio/") {
+        } else if mimeType.hasPrefix("audio/") {
             return .audio
         } else {
             return .custom
         }
     }
+
+    var isImage: Bool { category == .image }
+    var isVideo: Bool { category == .video }
+    var isAudio: Bool { category == .audio }
 }
+
