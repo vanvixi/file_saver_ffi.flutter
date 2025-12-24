@@ -3,11 +3,8 @@ import 'dart:typed_data';
 
 import '../models/conflict_resolution.dart';
 import '../models/file_type.dart';
-import '../models/save_result.dart';
 import '../platforms/android/file_saver_android.dart';
 import '../platforms/ios/file_saver_ios.dart';
-
-
 
 /// Platform interface for file saver implementations.
 ///
@@ -52,7 +49,7 @@ abstract class FileSaverPlatform {
   /// - [SaveSuccess] with file path and URI if successful
   /// - [SaveFailure] with error details if failed
   ///
-  Future<SaveResult> saveBytes({
+  Future<Uri> saveBytes({
     required Uint8List fileBytes,
     required FileType fileType,
     required String fileName,
