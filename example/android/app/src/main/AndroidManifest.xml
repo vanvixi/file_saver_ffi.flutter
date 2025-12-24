@@ -1,4 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Three-tier permission model:
+      - Android 13+ (API 33+): No permission needed
+      - Android 10-12 (API 29-32): Scoped storage, READ permission for querying
+      - Android 9- (API 28-): WRITE permission required
+    -->
+
+    <!-- Legacy storage (Android 9 and below only) -->
+    <uses-permission
+            android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+            android:maxSdkVersion="28" />
+
     <application
         android:label="file_saver_ffi_example"
         android:name="${applicationName}"

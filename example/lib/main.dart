@@ -1,72 +1,48 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 
-import 'package:file_saver_ffi/file_saver_ffi.dart' as file_saver_ffi;
+import 'tabs/tabs.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'File Saver FFI Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const FileSaverDemoPage(),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> {
-  late int sumResult;
-  late Future<int> sumAsyncResult;
-
-  @override
-  void initState() {
-    super.initState();
-    sumResult = file_saver_ffi.sum(1, 2);
-    sumAsyncResult = file_saver_ffi.sumAsync(3, 4);
-  }
+class FileSaverDemoPage extends StatelessWidget {
+  const FileSaverDemoPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const textStyle = TextStyle(fontSize: 25);
-    const spacerSmall = SizedBox(height: 10);
-    return MaterialApp(
-      home: Scaffold(
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
         appBar: AppBar(
-          title: const Text('Native Packages'),
-        ),
-        body: SingleChildScrollView(
-          child: Container(
-            padding: const .all(10),
-            child: Column(
-              children: [
-                const Text(
-                  'This calls a native function through FFI that is shipped as source in the package. '
-                  'The native code is built as part of the Flutter Runner build.',
-                  style: textStyle,
-                  textAlign: .center,
-                ),
-                spacerSmall,
-                Text(
-                  'sum(1, 2) = $sumResult',
-                  style: textStyle,
-                  textAlign: .center,
-                ),
-                spacerSmall,
-                FutureBuilder<int>(
-                  future: sumAsyncResult,
-                  builder: (BuildContext context, AsyncSnapshot<int> value) {
-                    final displayValue =
-                        (value.hasData) ? value.data : 'loading';
-                    return Text(
-                      'await sumAsync(3, 4) = $displayValue',
-                      style: textStyle,
-                      textAlign: .center,
-                    );
-                  },
-                ),
-              ],
-            ),
+          title: const Text('File Saver FFI Demo'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          bottom: TabBar(
+            tabs: const [
+              Tab(icon: Icon(Icons.image), text: 'Image'),
+              Tab(icon: Icon(Icons.video_library), text: 'Video'),
+              Tab(icon: Icon(Icons.insert_drive_file), text: 'File'),
+            ],
           ),
+        ),
+        body: TabBarView(
+          children: const [ImageTabPage(), VideoTabPage(), FileTabPage()],
         ),
       ),
     );
