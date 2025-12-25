@@ -56,7 +56,7 @@ sealed class FileSaverException implements Exception {
 /// or when permissions are not granted.
 final class PermissionDeniedException extends FileSaverException {
   const PermissionDeniedException([String? message])
-      : super(message ?? 'Storage permission denied', 'PERMISSION_DENIED');
+    : super(message ?? 'Storage permission denied', 'PERMISSION_DENIED');
 }
 
 /// File already exists and conflict resolution strategy is set to fail.
@@ -66,7 +66,7 @@ final class PermissionDeniedException extends FileSaverException {
 /// - The conflict resolution strategy is [ConflictResolution.fail]
 final class FileExistsException extends FileSaverException {
   const FileExistsException(this.fileName)
-      : super('File already exists: $fileName', 'FILE_EXISTS');
+    : super('File already exists: $fileName', 'FILE_EXISTS');
 
   /// The name of the existing file.
   final String fileName;
@@ -77,7 +77,7 @@ final class FileExistsException extends FileSaverException {
 
 final class InvalidFileException extends FileSaverException {
   const InvalidFileException(String reason)
-      : super('Invalid file: $reason', 'INVALID_FILE');
+    : super('Invalid file: $reason', 'INVALID_FILE');
 }
 
 /// Insufficient storage space available.
@@ -86,7 +86,7 @@ final class InvalidFileException extends FileSaverException {
 /// on the device to save the file.
 final class StorageFullException extends FileSaverException {
   const StorageFullException()
-      : super('Insufficient storage space', 'STORAGE_FULL');
+    : super('Insufficient storage space', 'STORAGE_FULL');
 }
 
 /// Platform-specific error occurred.
@@ -115,7 +115,7 @@ final class PlatformException extends FileSaverException {
 /// - File system error occurred
 final class FileIOException extends FileSaverException {
   const FileIOException(String reason)
-      : super('File I/O error: $reason', 'FILE_IO_ERROR');
+    : super('File I/O error: $reason', 'FILE_IO_ERROR');
 }
 
 /// File format is not supported on this platform or OS version.
@@ -126,10 +126,10 @@ final class FileIOException extends FileSaverException {
 /// - OS version doesn't support the format
 final class UnsupportedFormatException extends FileSaverException {
   const UnsupportedFormatException(this.format, [String? details])
-      : super(
-          'File format "$format" is not supported on this platform${details != null ? ": $details" : ""}',
-          'UNSUPPORTED_FORMAT',
-        );
+    : super(
+        'File format "$format" is not supported on this platform${details != null ? ": $details" : ""}',
+        'UNSUPPORTED_FORMAT',
+      );
 
   /// The unsupported file format/extension.
   final String format;

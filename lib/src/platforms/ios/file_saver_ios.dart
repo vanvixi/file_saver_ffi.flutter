@@ -49,7 +49,8 @@ class FileSaverIos extends FileSaverPlatform {
     }
 
     final callback = ffi.NativeCallable<
-        ffi.Void Function(ffi.Pointer<FSaveResult>)>.listener(onResult);
+      ffi.Void Function(ffi.Pointer<FSaveResult>)
+    >.listener(onResult);
 
     final dataPointer = malloc.allocate<ffi.Uint8>(fileBytes.length);
     final dataList = dataPointer.asTypedList(fileBytes.length);

@@ -28,5 +28,5 @@ enum ConflictResolution {
   ///
   /// Returns [SaveSuccess] with the path of the existing file.
   /// No actual file writing occurs.
-  skip;
+  skip,
 }
