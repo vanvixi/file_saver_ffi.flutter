@@ -1,7 +1,6 @@
 import Foundation
 
 class CustomFileSaver: BaseFileSaver {
-    private let baseDirectory = "Files"
 
     func saveBytes(
         fileData: Data,
@@ -12,8 +11,7 @@ class CustomFileSaver: BaseFileSaver {
     ) throws -> SaveResult {
         try validateFileData(fileData)
 
-        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        var targetDir = documentsURL.appendingPathComponent(baseDirectory)
+        var targetDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
 
         if let subDir = subDir {
             targetDir = targetDir.appendingPathComponent(subDir)

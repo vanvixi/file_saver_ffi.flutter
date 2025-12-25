@@ -1,7 +1,6 @@
 import Foundation
 
 class AudioSaver: BaseFileSaver {
-    private let baseDirectory = "Audio"
 
     func saveBytes(
         fileData: Data,
@@ -13,8 +12,7 @@ class AudioSaver: BaseFileSaver {
         try FormatValidator.validateAudioFormat(fileType)
         try validateFileData(fileData)
 
-        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        var targetDir = documentsURL.appendingPathComponent(baseDirectory)
+        var targetDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
 
         if let subDir = subDir {
             targetDir = targetDir.appendingPathComponent(subDir)
