@@ -9,9 +9,9 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 A Flutter plugin for saving files to device storage using FFI and JNI
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/vanvixi/file_saver_ffi'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'Vanvixi' => 'vanvixi.dev@gmail.com' }
 
   # This will ensure the source files in Classes/ are included in the native
   # builds of apps using this FFI plugin.
