@@ -12,17 +12,34 @@ enum FileHelper {
     }
 
     static func writeFile(data: Data, to url: URL) throws {
-        let fileHandle = try FileHandle(forWritingTo: url)
-        defer { try? fileHandle.close() }
+        if #available(iOS 13.4, *) {
+            // iOS 13.4+ - Use modern write API with error handling
+            let fileHandle = try FileHandle(forWritingTo: url)
+            defer { try? fileHandle.close() }
 
-        var offset = 0
-        let chunkSize = Constants.chunkSize
+            var offset = 0
+            let chunkSize = Constants.chunkSize
 
-        while offset < data.count {
-            let length = min(chunkSize, data.count - offset)
-            let chunk = data.subdata(in: offset..<(offset + length))
-            try fileHandle.write(contentsOf: chunk)
-            offset += length
+            while offset < data.count {
+                let length = min(chunkSize, data.count - offset)
+                let chunk = data.subdata(in: offset..<(offset + length))
+                try fileHandle.write(contentsOf: chunk)
+                offset += length
+            }
+        } else {
+            // iOS 13.0-13.3 fallback - Use legacy write API
+            let fileHandle = try FileHandle(forWritingTo: url)
+            defer { fileHandle.closeFile() }
+
+            var offset = 0
+            let chunkSize = Constants.chunkSize
+
+            while offset < data.count {
+                let length = min(chunkSize, data.count - offset)
+                let chunk = data.subdata(in: offset..<(offset + length))
+                fileHandle.write(chunk)
+                offset += length
+            }
         }
     }
 
