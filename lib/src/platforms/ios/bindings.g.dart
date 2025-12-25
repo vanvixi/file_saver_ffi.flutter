@@ -15,16 +15,17 @@ import 'dart:ffi' as ffi;
 class FileSaverFfiBindings {
   /// Holds the symbol lookup function.
   final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
-  _lookup;
+      _lookup;
 
   /// The symbols are looked up in [dynamicLibrary].
   FileSaverFfiBindings(ffi.DynamicLibrary dynamicLibrary)
-    : _lookup = dynamicLibrary.lookup;
+      : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
   FileSaverFfiBindings.fromLookup(
-    ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
-  ) : _lookup = lookup;
+      ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
+          lookup)
+      : _lookup = lookup;
 
   ffi.Pointer<ffi.Void> file_saver_init() {
     return _file_saver_init();
@@ -32,10 +33,9 @@ class FileSaverFfiBindings {
 
   late final _file_saver_initPtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function()>>(
-        'file_saver_init',
-      );
-  late final _file_saver_init = _file_saver_initPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function()>();
+          'file_saver_init');
+  late final _file_saver_init =
+      _file_saver_initPtr.asFunction<ffi.Pointer<ffi.Void> Function()>();
 
   void file_saver_save_bytes_async(
     ffi.Pointer<ffi.Void> instance,
@@ -61,58 +61,58 @@ class FileSaverFfiBindings {
     );
   }
 
-  late final _file_saver_save_bytes_asyncPtr =
-      _lookup<
-        ffi.NativeFunction<
+  late final _file_saver_save_bytes_asyncPtr = _lookup<
+      ffi.NativeFunction<
           ffi.Void Function(
-            ffi.Pointer<ffi.Void>,
-            ffi.Pointer<ffi.Uint8>,
-            ffi.Int64,
-            ffi.Pointer<ffi.Char>,
-            ffi.Pointer<ffi.Char>,
-            ffi.Pointer<ffi.Char>,
-            ffi.Pointer<ffi.Char>,
-            ffi.Int32,
-            FSaveResultCallback,
-          )
-        >
-      >('file_saver_save_bytes_async');
-  late final _file_saver_save_bytes_async = _file_saver_save_bytes_asyncPtr
-      .asFunction<
-        void Function(
-          ffi.Pointer<ffi.Void>,
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          ffi.Pointer<ffi.Char>,
-          int,
-          FSaveResultCallback,
-        )
-      >();
+              ffi.Pointer<ffi.Void>,
+              ffi.Pointer<ffi.Uint8>,
+              ffi.Int64,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32,
+              FSaveResultCallback)>>('file_saver_save_bytes_async');
+  late final _file_saver_save_bytes_async =
+      _file_saver_save_bytes_asyncPtr.asFunction<
+          void Function(
+              ffi.Pointer<ffi.Void>,
+              ffi.Pointer<ffi.Uint8>,
+              int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              int,
+              FSaveResultCallback)>();
 
-  void file_saver_free_result(ffi.Pointer<FSaveResult> result) {
-    return _file_saver_free_result(result);
+  void file_saver_free_result(
+    ffi.Pointer<FSaveResult> result,
+  ) {
+    return _file_saver_free_result(
+      result,
+    );
   }
 
   late final _file_saver_free_resultPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FSaveResult>)>>(
-        'file_saver_free_result',
-      );
+          'file_saver_free_result');
   late final _file_saver_free_result = _file_saver_free_resultPtr
       .asFunction<void Function(ffi.Pointer<FSaveResult>)>();
 
-  void file_saver_dispose(ffi.Pointer<ffi.Void> instance) {
-    return _file_saver_dispose(instance);
+  void file_saver_dispose(
+    ffi.Pointer<ffi.Void> instance,
+  ) {
+    return _file_saver_dispose(
+      instance,
+    );
   }
 
   late final _file_saver_disposePtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-        'file_saver_dispose',
-      );
-  late final _file_saver_dispose = _file_saver_disposePtr
-      .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+          'file_saver_dispose');
+  late final _file_saver_dispose =
+      _file_saver_disposePtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 }
 
 final class FSaveResult extends ffi.Struct {
@@ -128,9 +128,9 @@ final class FSaveResult extends ffi.Struct {
   external ffi.Pointer<ffi.Char> errorMessage;
 }
 
-typedef FSaveResultCallbackFunction =
-    ffi.Void Function(ffi.Pointer<FSaveResult>);
-typedef DartFSaveResultCallbackFunction =
-    void Function(ffi.Pointer<FSaveResult>);
-typedef FSaveResultCallback =
-    ffi.Pointer<ffi.NativeFunction<FSaveResultCallbackFunction>>;
+typedef FSaveResultCallbackFunction = ffi.Void Function(
+    ffi.Pointer<FSaveResult>);
+typedef DartFSaveResultCallbackFunction = void Function(
+    ffi.Pointer<FSaveResult>);
+typedef FSaveResultCallback
+    = ffi.Pointer<ffi.NativeFunction<FSaveResultCallbackFunction>>;
