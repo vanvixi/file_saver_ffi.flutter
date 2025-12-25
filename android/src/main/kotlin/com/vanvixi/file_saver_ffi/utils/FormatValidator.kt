@@ -56,8 +56,12 @@ object FormatValidator {
     /**
      * Validates image format support for SAVING/ENCODING.
      */
-    fun validateImageFormat(imageType: FileType) {
-        val ext = imageType.ext
+    fun validateImageFormat(fileType: FileType) {
+        if (!fileType.isImage) {
+            throw IllegalStateException("Expected image MIME type")
+        }
+
+        val ext = fileType.ext
 
         val alwaysSupported = setOf("png", "jpeg", "jpg", "gif", "bmp")
         if (ext in alwaysSupported) return
@@ -69,7 +73,7 @@ object FormatValidator {
             "webp" -> listOf("image/webp")
             "avif" -> listOf("image/avif")
             else -> listOfNotNull(
-                imageType.mimeType,
+                fileType.mimeType,
                 MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
             )
         }
@@ -94,8 +98,11 @@ object FormatValidator {
      * Validates VIDEO/AUDIO format support for SAVING/ENCODING.
      */
     private fun validateMedia(fileType: FileType, category: FileType.Category) {
-        val ext = fileType.ext.lowercase()
-        val mimeType = fileType.mimeType.lowercase()
+        if (fileType.category != category) {
+            throw IllegalStateException("Expected ${category.name.lowercase()} MIME type")
+        }
+        val ext = fileType.ext
+        val mimeType = fileType.mimeType
 
         val availableEncoders = encodersByType[category] ?: emptySet()
 
