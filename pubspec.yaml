@@ -1,11 +1,22 @@
 name: file_saver_ffi
 description: "A Flutter plugin for saving files to device storage using FFI and JNI"
 version: 0.0.1
-homepage:
+homepage: https://github.com/vanvixi/file_saver_ffi.flutter
+repository: https://github.com/vanvixi/file_saver_ffi.flutter
+issue_tracker: https://github.com/vanvixi/file_saver_ffi.flutter
+topics:
+  - file-saver
+  - file-saver-ffi
+  - file-saver-native
+  - ffi
+  - jni
+
+screenshots:
+  - description: "File Saver Ffi"
+    path: screenshots/cover.png
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
-  flutter: ">=3.22.0"
 
 dependencies:
   flutter:
