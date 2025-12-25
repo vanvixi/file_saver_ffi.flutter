@@ -11,51 +11,94 @@ enum FormatValidator {
     }()
 
     static func validateImageFormat(_ fileType: FileType) throws {
-        let ext = fileType.ext.lowercased()
+        guard fileType.isImage else {
+            throw FileSaverError.platformError("Expected image MIME type")
+        }
 
-        let alwaysSupported = ["png", "jpg", "jpeg", "gif"]
-        if alwaysSupported.contains(ext) { return }
+        let ext = fileType.ext
 
-        guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext as CFString, nil)?.takeRetainedValue() else {
-            throw FileSaverError.unsupportedFormat(ext.uppercased(), details: "Could not determine UTI for extension")
+        guard let uti = UTTypeCreatePreferredIdentifierForTag(
+            kUTTagClassFilenameExtension,
+            ext as CFString,
+            nil
+        )?.takeRetainedValue() else {
+            throw FileSaverError.unsupportedFormat(
+                ext.uppercased(),
+                details: "Cannot resolve UTI from extension"
+            )
         }
 
         let utiString = uti as String
         if !supportedImageUTIs.contains(utiString) {
-            throw FileSaverError.unsupportedFormat(ext.uppercased(), details: "Device cannot encode this image format")
+            throw FileSaverError.unsupportedFormat(
+                ext.uppercased(),
+                details: "ImageIO cannot encode this format"
+            )
         }
     }
 
     static func validateVideoFormat(_ fileType: FileType) throws {
-        let ext = fileType.ext.lowercased()
-
-        guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext as CFString, nil)?.takeRetainedValue() else {
-            throw FileSaverError.unsupportedFormat(ext.uppercased(), details: "Invalid video extension")
-        }
-
-        let utiString = uti as String
-
-        // Check out AVAssetWriter's support for this Container
-        // Note: iOS 13 uses an indirect check via AVAssetWriter(url:fileType:)
-        // or more simply, check the validity of UTIs in the AVFoundation system
-        let avType = AVFileType(utiString)
-
-        // Check if the system can generate an output for this file type
-        if !isAVFileTypeSupported(avType) {
-            throw FileSaverError.unsupportedFormat(ext.uppercased(), details: "Device cannot encode this video container")
-        }
+        try validateMediaFormat(fileType, expected: .video)
     }
 
     static func validateAudioFormat(_ fileType: FileType) throws {
-        // Audio on iOS is also classified as an AVFileType
-        try validateVideoFormat(fileType)
+        try validateMediaFormat(fileType, expected: .audio)
     }
 
-    // AVFileType Checker Plug-in for iOS 13+
-    private static func isAVFileTypeSupported(_ type: AVFileType) -> Bool {
-        // The safest way on iOS 13 to check support is to try it
-        // or check out AVAssetWriter's list of supported UTIs
-        let testWriter = try? AVAssetWriter(outputURL: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test"), fileType: type)
-        return testWriter != nil
+    // Core media validation for Video and Audio
+    private static func validateMediaFormat(
+        _ fileType: FileType,
+        expected: FileType.Category
+    ) throws {
+
+        guard fileType.category == expected else {
+            throw FileSaverError.platformError(
+                "Expected \(expected) MIME type"
+            )
+        }
+
+        guard let uti = uti(fromExtension: fileType.ext) else {
+            throw FileSaverError.unsupportedFormat(
+                fileType.ext.uppercased(),
+                details: "Cannot resolve UTI from extension"
+            )
+        }
+
+        let avFileType = AVFileType(uti)
+
+        guard let preferredExt = preferredExtension(fromUTI: uti) else {
+            throw FileSaverError.unsupportedFormat(
+                fileType.ext.uppercased(),
+                details: "Cannot resolve preferred file extension"
+            )
+        }
+
+        let testURL = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(preferredExt)
+
+        guard (try? AVAssetWriter(outputURL: testURL, fileType: avFileType)) != nil else {
+            throw FileSaverError.unsupportedFormat(
+                fileType.ext.uppercased(),
+                details: "AVAssetWriter cannot encode this media container"
+            )
+        }
+    }
+    
+
+    // MARK: - UTI HELPERS (iOS 13 compatible)
+    private static func uti(fromExtension ext: String) -> String? {
+        UTTypeCreatePreferredIdentifierForTag(
+            kUTTagClassFilenameExtension,
+            ext as CFString,
+            nil
+        )?.takeRetainedValue() as String?
+    }
+
+    private static func preferredExtension(fromUTI uti: String) -> String? {
+        UTTypeCopyPreferredTagWithClass(
+            uti as CFString,
+            kUTTagClassFilenameExtension
+        )?.takeRetainedValue() as String?
     }
 }
