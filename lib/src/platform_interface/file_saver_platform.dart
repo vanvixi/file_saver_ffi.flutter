@@ -1,5 +1,4 @@
-import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import '../models/conflict_resolution.dart';
 import '../models/file_type.dart';
@@ -15,22 +14,19 @@ import '../platforms/ios/file_saver_ios.dart';
 /// - iOS: Uses FFI to call Objective-C code
 /// - Android: Uses JNI to call Kotlin code
 abstract class FileSaverPlatform {
+  static FileSaverPlatform? _instance;
+
   /// Get the appropriate platform instance based on the current platform.
-  ///
-  /// Returns:
-  /// - [FileSaverIos] if running on iOS
-  /// - [FileSaverAndroid] if running on Android
-  /// - Throws [UnsupportedError] if running on unsupported platform
   static FileSaverPlatform get instance {
-    if (Platform.isAndroid) {
-      return FileSaverAndroid();
-    } else if (Platform.isIOS) {
-      return FileSaverIos();
-    } else {
-      throw UnsupportedError(
-        'Platform not supported: ${Platform.operatingSystem}',
-      );
-    }
+    _instance ??= switch (defaultTargetPlatform) {
+      TargetPlatform.android => FileSaverAndroid(),
+      TargetPlatform.iOS => FileSaverIos(),
+      _ =>
+        throw UnsupportedError(
+          'FileSaver is not supported on ${defaultTargetPlatform.toString()}',
+        ),
+    };
+    return _instance!;
   }
 
   /// Disposes resources
