@@ -21,7 +21,8 @@ class FileSaver {
 
   FileSaverPlatform get _platform => FileSaverPlatform.instance;
 
-  /// Disposes resources used by the FileSaver instance.
+  /// Resources are automatically released on app termination,
+  /// but call dispose() for timely cleanup.
   void dispose() {
     _platform.dispose();
   }
