@@ -97,6 +97,56 @@ try {
 }
 ```
 
+## Resource Management
+
+`FileSaver` uses native resources via FFI (iOS) and JNI (Android). The library provides **automatic cleanup** via `NativeFinalizer`, but you can also manually release resources if needed.
+
+### Manual Disposal
+
+If you want to release native resources immediately (e.g., to free memory sooner), call `dispose()`:
+
+```dart
+// Release resources immediately when you're done
+FileSaver.instance.dispose();
+```
+
+### App Lifecycle Integration (Optional)
+
+For explicit cleanup when the app terminates, you can use `WidgetsBindingObserver`:
+
+```dart
+import 'package:file_saver_ffi/file_saver_ffi.dart';
+import 'package:flutter/material.dart';
+
+class AppLifecycleObserver extends WidgetsBindingObserver {
+  final VoidCallback? onDetached;
+
+  AppLifecycleObserver({this.onDetached});
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      onDetached?.call();
+    }
+  }
+}
+
+void main() {
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  
+  binding.addObserver(
+    AppLifecycleObserver(
+      onDetached: FileSaver.instance.dispose,
+    ),
+  );
+  
+  runApp(const MyApp());
+}
+```
+
+> **Note:** `AppLifecycleState.detached` is not guaranteed to be called on all platforms when the app is force-killed. However, the OS will automatically reclaim all memory when the process terminates, so this is primarily for explicit cleanup in normal shutdown scenarios.
+```
+
 ## Supported File Types
 
 ### Images (12 formats)
