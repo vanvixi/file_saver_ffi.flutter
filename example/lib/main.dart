@@ -1,8 +1,28 @@
+import 'package:file_saver_ffi/file_saver_ffi.dart';
 import 'package:flutter/material.dart';
 
 import 'tabs/tabs.dart';
 
+class AppLifecycleStateObserver extends WidgetsBindingObserver {
+  final void Function()? onDetached;
+
+  AppLifecycleStateObserver({this.onDetached});
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.detached:
+        onDetached?.call();
+      default:
+    }
+  }
+}
+
 void main() {
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  binding.addObserver(
+    AppLifecycleStateObserver(onDetached: FileSaver.instance.dispose),
+  );
   runApp(const MyApp());
 }
 
