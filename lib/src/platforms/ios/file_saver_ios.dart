@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ffi' as ffi;
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
@@ -12,13 +12,13 @@ import 'bindings.g.dart';
 
 class FileSaverIos extends FileSaverPlatform {
   FileSaverIos() {
-    final dylib = ffi.DynamicLibrary.process();
+    final dylib = DynamicLibrary.process();
     _bindings = FileSaverFfiBindings(dylib);
     _saverInstance = _bindings.file_saver_init();
   }
 
   late final FileSaverFfiBindings _bindings;
-  late final ffi.Pointer<ffi.Void> _saverInstance;
+  late final Pointer<Void> _saverInstance;
 
   @override
   void dispose() {
@@ -37,7 +37,7 @@ class FileSaverIos extends FileSaverPlatform {
 
     final completer = Completer<Uri>();
 
-    void onResult(ffi.Pointer<FSaveResult> resultPtr) {
+    void onResult(Pointer<FSaveResult> resultPtr) {
       try {
         final result = _convertToUriOrThrow(resultPtr.ref);
         _bindings.file_saver_free_result(resultPtr);
@@ -48,11 +48,10 @@ class FileSaverIos extends FileSaverPlatform {
       }
     }
 
-    final callback = ffi.NativeCallable<
-      ffi.Void Function(ffi.Pointer<FSaveResult>)
-    >.listener(onResult);
+    final callback =
+        NativeCallable<Void Function(Pointer<FSaveResult>)>.listener(onResult);
 
-    final dataPointer = malloc.allocate<ffi.Uint8>(fileBytes.length);
+    final dataPointer = malloc.allocate<Uint8>(fileBytes.length);
     final dataList = dataPointer.asTypedList(fileBytes.length);
     dataList.setAll(0, fileBytes);
 
@@ -69,7 +68,7 @@ class FileSaverIos extends FileSaverPlatform {
         fileNameCStr.cast(),
         extCStr.cast(),
         mimeCStr.cast(),
-        subDirCStr?.cast() ?? ffi.nullptr,
+        subDirCStr?.cast() ?? nullptr,
         conflictResolution.index,
         callback.nativeFunction,
       );
