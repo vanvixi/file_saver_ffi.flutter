@@ -13,7 +13,7 @@ topics:
 
 screenshots:
   - description: "File Saver Ffi"
-    path: screenshots/cover.png
+    path: screenshots/thumbnail.png
 
 environment:
   sdk: ">=3.7.0 <4.0.0"
