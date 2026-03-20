@@ -500,9 +500,24 @@ class FileSaverAndroid extends FileSaverPlatform {
 
   @override
   Future<void> openFile(Uri uri, {String? mimeType}) async {
-    final jUri = uri.toString().toJString();
-    final jMimeType = mimeType?.toJString();
-    _fileSaver.openFile(jUri, jMimeType);
+    if (!uri.isScheme('content') && !uri.isScheme('file')) {
+      throw InvalidInputException(
+        'openFile supports only content:// and file:// URIs on Android (got: $uri)',
+      );
+    }
+
+    if (!await canOpenFile(uri)) {
+      throw OpenFailedException('File is not accessible: $uri');
+    }
+
+    try {
+      final jUri = uri.toString().toJString();
+      final jMimeType = mimeType?.toJString();
+      _fileSaver.openFile(jUri, jMimeType);
+    } catch (e) {
+      if (e is FileSaverException) rethrow;
+      throw OpenFailedException('$e');
+    }
   }
 
   @override

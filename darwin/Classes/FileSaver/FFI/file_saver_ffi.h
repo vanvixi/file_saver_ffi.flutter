@@ -239,7 +239,7 @@ uint64_t file_saver_save_network_as(
 /// - macOS: Opens the file with NSWorkspace.shared.open().
 ///
 /// @param uri URI string returned from save operations (file://, ph://)
-void file_saver_open_file(const char* uri);
+bool file_saver_open_file(const char* uri);
 
 /// Checks whether the file at the given URI is accessible for reading.
 ///

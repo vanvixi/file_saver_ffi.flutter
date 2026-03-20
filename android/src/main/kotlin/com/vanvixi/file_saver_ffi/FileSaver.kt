@@ -137,10 +137,10 @@ class FileSaver() {
             "content" -> parsedUri
             "file" -> {
                 val path = parsedUri.path
-                    ?: throw IllegalArgumentException("Invalid file URI: $uri")
+                    ?: throw IllegalArgumentException("INVALID_INPUT: Invalid file URI: $uri")
                 val file = File(path)
                 if (!file.exists() || !file.canRead()) {
-                    throw IllegalArgumentException("File is not accessible: $path")
+                    throw IllegalArgumentException("FILE_NOT_FOUND: File is not accessible: $path")
                 }
 
                 val authority = "${context.packageName}.file_saver_ffi.fileprovider"
@@ -173,7 +173,7 @@ class FileSaver() {
                     )
                 }
             }
-            else -> throw IllegalArgumentException("Unsupported URI scheme: ${parsedUri.scheme}")
+            else -> throw IllegalArgumentException("INVALID_INPUT: Unsupported URI scheme: ${parsedUri.scheme}")
         }
 
         val resolvedMime =
@@ -194,7 +194,10 @@ class FileSaver() {
         try {
             context.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            throw IllegalStateException("No app found to open this file (mimeType=$resolvedMime).", e)
+            throw IllegalStateException(
+                "NO_APP_FOUND: No app found to open this file (mimeType=$resolvedMime).",
+                e
+            )
         }
     }
 

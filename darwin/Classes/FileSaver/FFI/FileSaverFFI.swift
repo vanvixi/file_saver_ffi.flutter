@@ -529,29 +529,40 @@ private func fileSaverPresentActivityVC(_ items: [Any], from viewController: UIV
 #endif
 
 @_cdecl("file_saver_open_file")
-public func fileSaverOpenFile(_ uriString: UnsafePointer<CChar>) {
+public func fileSaverOpenFile(_ uriString: UnsafePointer<CChar>) -> Bool {
     let uri = String(cString: uriString)
-    DispatchQueue.main.async {
+    let work: () -> Bool = {
         #if os(iOS)
-        guard let viewController = fileSaverTopViewController() else { return }
+        guard let viewController = fileSaverTopViewController() else { return false }
 
         if uri.hasPrefix("ph://") {
             // ph:// is an internal Photos framework scheme — UIApplication.shared.open()
             // does not work with it. Resolve the underlying file URL via PHAsset and
             // show a QuickLook/system preview instead.
             let localId = String(uri.dropFirst("ph://".count))
+            let fetchResult = PHAsset.fetchAssets(
+                withLocalIdentifiers: [localId.uppercased()], options: nil
+            )
+            guard fetchResult.firstObject != nil else { return false }
             fileSaverOpenPhAsset(localId, from: viewController)
+            return true
         } else if let url = URL(string: uri) {
             // Use UIDocumentInteractionController (QuickLook preview) for file:// URIs.
             // Falls back to UIActivityViewController for unsupported file types.
             fileSaverPresentPreview(url: url, from: viewController)
+            return true
         }
+        return false
         #elseif os(macOS)
-        if let url = URL(string: uri) {
-            NSWorkspace.shared.open(url)
-        }
+        guard let url = URL(string: uri) else { return false }
+        return NSWorkspace.shared.open(url)
         #endif
     }
+
+    if Thread.isMainThread {
+        return work()
+    }
+    return DispatchQueue.main.sync(execute: work)
 }
 
 @_cdecl("file_saver_can_open_file")

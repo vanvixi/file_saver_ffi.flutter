@@ -544,16 +544,16 @@ class FileSaverFFI {
   /// - macOS: Opens the file with NSWorkspace.shared.open().
   ///
   /// @param uri URI string returned from save operations (file://, ph://)
-  void openFile(ffi.Pointer<ffi.Char> uri) {
+  bool openFile(ffi.Pointer<ffi.Char> uri) {
     return _openFile(uri);
   }
 
   late final _openFilePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<ffi.Char>)>>(
         'file_saver_open_file',
       );
   late final _openFile =
-      _openFilePtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+      _openFilePtr.asFunction<bool Function(ffi.Pointer<ffi.Char>)>();
 
   /// Checks whether the file at the given URI is accessible for reading.
   ///

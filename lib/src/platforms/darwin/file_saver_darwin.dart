@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -508,10 +509,37 @@ class FileSaverDarwin extends FileSaverPlatform implements Finalizable {
 
   @override
   Future<void> openFile(Uri uri, {String? mimeType}) async {
-    using((arena) {
+    final isIos = Platform.isIOS;
+    final allowed =
+        uri.isScheme('file') || (isIos && uri.scheme.toLowerCase() == 'ph');
+    if (!allowed) {
+      throw InvalidInputException(
+        'openFile supports only file:// URIs${isIos ? " and ph:// URIs" : ""} on ${isIos ? "iOS" : "macOS"} (got: $uri)',
+      );
+    }
+
+    if (uri.isScheme('file')) {
+      if (!await File.fromUri(uri).exists()) {
+        throw SourceFileNotFoundException(uri.toString());
+      }
+      if (!await canOpenFile(uri)) {
+        throw OpenFailedException('File is not accessible: $uri');
+      }
+    } else {
+      // iOS-only: ph:// (Photos asset). canOpenFile() checks PHAsset existence.
+      if (!await canOpenFile(uri)) {
+        throw SourceFileNotFoundException(uri.toString());
+      }
+    }
+
+    final bool ok = using((arena) {
       final uriCStr = uri.toString().toNativeUtf8(allocator: arena);
-      _fileSaver.openFile(uriCStr.cast());
+      return _fileSaver.openFile(uriCStr.cast());
     });
+
+    if (!ok) {
+      throw OpenFailedException('Darwin native open returned false (uri=$uri)');
+    }
   }
 
   @override
