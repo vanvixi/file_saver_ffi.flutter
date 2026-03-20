@@ -19,6 +19,14 @@ sealed class FileSaverException implements Exception {
       _ when contains('PERMISSION_DENIED') => PermissionDeniedException(msg),
       _ when contains('FILE_EXISTS') => FileExistsException(msg),
       _ when contains('FILE_NOT_FOUND') => SourceFileNotFoundException(msg),
+      _ when contains('OPEN_FAILED') => OpenFailedException(msg),
+      _ when contains('NO_APP_FOUND') => OpenFailedException(msg),
+      _ when contains('FILE_PROVIDER_NOT_CONFIGURED') => OpenFailedException(
+        msg,
+      ),
+      _ when contains('FILE_PROVIDER_PATHS_NOT_COVERED') => OpenFailedException(
+        msg,
+      ),
       _ when contains('ICLOUD_DOWNLOAD_FAILED') => ICloudDownloadException(msg),
       _ when contains('NETWORK_ERROR') => NetworkException(msg),
       _ when contains('INVALID_INPUT') => InvalidInputException(msg),
@@ -35,6 +43,7 @@ sealed class FileSaverException implements Exception {
       'PERMISSION_DENIED' => PermissionDeniedException(message),
       'FILE_EXISTS' => FileExistsException(message),
       'FILE_NOT_FOUND' => SourceFileNotFoundException(message),
+      'OPEN_FAILED' => OpenFailedException(message),
       'ICLOUD_DOWNLOAD_FAILED' => ICloudDownloadException(message),
       'NETWORK_ERROR' => NetworkException(message),
       'INVALID_INPUT' || 'INVALID_ARGUMENT' => InvalidInputException(message),
@@ -113,6 +122,15 @@ final class NativePlatformException extends FileSaverException {
     final fullMessage = details != null ? '$message: $details' : message;
     return NativePlatformException(fullMessage, code);
   }
+}
+
+/// Open file operation failed.
+///
+/// This exception is thrown when the platform fails to open a file with a
+/// suitable system app (no handler, OS rejected the request, or the open
+/// command failed).
+final class OpenFailedException extends FileSaverException {
+  const OpenFailedException(String message) : super(message, 'OPEN_FAILED');
 }
 
 /// File I/O operation failed.
