@@ -279,11 +279,33 @@ abstract class DesktopFileSaver extends FileSaverPlatform {
 
   @override
   Future<void> openFile(Uri uri, {String? mimeType}) async {
+    if (!uri.isScheme('file')) {
+      throw InvalidInputException(
+        'openFile only supports file:// URIs on desktop (got: $uri)',
+      );
+    }
+
+    if (!await File.fromUri(uri).exists()) {
+      throw SourceFileNotFoundException(uri.toString());
+    }
+
     final path = uri.toFilePath();
-    if (Platform.isWindows) {
-      await Process.run('cmd', ['/c', 'start', '', path]);
-    } else {
-      await Process.run('xdg-open', [path]);
+    try {
+      final ProcessResult result;
+      if (Platform.isWindows) {
+        result = await Process.run('cmd', ['/c', 'start', '""', path]);
+      } else {
+        result = await Process.run('xdg-open', [path]);
+      }
+
+      if (result.exitCode != 0) {
+        throw OpenFailedException(
+          'exitCode=${result.exitCode} stdout=${result.stdout} stderr=${result.stderr}',
+        );
+      }
+    } catch (e) {
+      if (e is FileSaverException) rethrow;
+      throw OpenFailedException('$e');
     }
   }
 
