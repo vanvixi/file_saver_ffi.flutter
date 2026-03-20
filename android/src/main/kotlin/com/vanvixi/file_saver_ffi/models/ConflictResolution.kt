@@ -1,6 +1,8 @@
 package com.vanvixi.file_saver_ffi.models
 
-enum class ConflictResolution(val value: Int) {
+enum class ConflictResolution(
+    val value: Int,
+) {
     /**
      * Automatically rename file with (1), (2), (3) suffix pattern
      * Example: file.txt → file (1).txt → file (2).txt
@@ -37,7 +39,8 @@ enum class ConflictResolution(val value: Int) {
      * Skip operation silently if file exists
      * Returns success with existing file path
      */
-    SKIP(3);
+    SKIP(3),
+    ;
 
     companion object {
         /**
@@ -46,7 +49,6 @@ enum class ConflictResolution(val value: Int) {
          * @param value Integer value (0-3)
          * @return Corresponding ConflictResolution, defaults to AUTO_RENAME if invalid
          */
-        fun fromInt(value: Int): ConflictResolution =
-            entries.find { it.value == value } ?: AUTO_RENAME
+        fun fromInt(value: Int): ConflictResolution = entries.find { it.value == value } ?: AUTO_RENAME
     }
 }

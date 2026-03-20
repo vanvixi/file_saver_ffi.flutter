@@ -30,32 +30,31 @@ import kotlinx.coroutines.flow.flowOn
  * }
  * ```
  */
-inline fun saveFlow(
-    crossinline block: suspend ProducerScope<SaveProgressEvent>.() -> Unit
-): Flow<SaveProgressEvent> = callbackFlow {
-    trySend(SaveProgressEvent.Started)
-    try {
-        block()
-    } catch (e: CancellationException) {
-        trySend(SaveProgressEvent.Cancelled)
+inline fun saveFlow(crossinline block: suspend ProducerScope<SaveProgressEvent>.() -> Unit): Flow<SaveProgressEvent> =
+    callbackFlow {
+        trySend(SaveProgressEvent.Started)
+        try {
+            block()
+        } catch (e: CancellationException) {
+            trySend(SaveProgressEvent.Cancelled)
+            close()
+            awaitClose {}
+            throw e // Re-throw to properly cancel coroutine
+        } catch (e: SecurityException) {
+            trySend(
+                SaveProgressEvent.Error(
+                    Constants.ERROR_PERMISSION_DENIED,
+                    "Permission denied: ${e.message}",
+                ),
+            )
+        } catch (e: Exception) {
+            trySend(
+                SaveProgressEvent.Error(
+                    Constants.ERROR_PLATFORM,
+                    "Unexpected error: ${e.message ?: "Unknown error"}",
+                ),
+            )
+        }
         close()
         awaitClose {}
-        throw e  // Re-throw to properly cancel coroutine
-    } catch (e: SecurityException) {
-        trySend(
-            SaveProgressEvent.Error(
-                Constants.ERROR_PERMISSION_DENIED,
-                "Permission denied: ${e.message}"
-            )
-        )
-    } catch (e: Exception) {
-        trySend(
-            SaveProgressEvent.Error(
-                Constants.ERROR_PLATFORM,
-                "Unexpected error: ${e.message ?: "Unknown error"}"
-            )
-        )
-    }
-    close()
-    awaitClose {}
-}.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO)

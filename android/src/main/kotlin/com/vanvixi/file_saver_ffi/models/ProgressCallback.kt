@@ -31,5 +31,10 @@ interface ProgressCallback {
      * @param data      eventType=2 → errorCode; eventType=3 → fileUri or sessionId string
      * @param message   eventType=2 → human-readable error message; otherwise null
      */
-    fun onEvent(eventType: Int, progress: Double, data: String?, message: String?)
+    fun onEvent(
+        eventType: Int,
+        progress: Double,
+        data: String?,
+        message: String?,
+    )
 }

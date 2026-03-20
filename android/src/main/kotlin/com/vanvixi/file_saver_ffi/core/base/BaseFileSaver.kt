@@ -13,8 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import java.io.FileNotFoundException
 import java.io.IOException
 
-abstract class BaseFileSaver(protected val context: Context) {
-
+abstract class BaseFileSaver(
+    protected val context: Context,
+) {
     /**
      * Saves byte array data with real-time progress streaming.
      *
@@ -26,35 +27,37 @@ abstract class BaseFileSaver(protected val context: Context) {
         fileData: ByteArray,
         entryFactory: SaveEntryFactory,
         conflictResolution: ConflictResolution,
-    ): Flow<SaveProgressEvent> = saveFlow {
-        if (fileData.isEmpty()) {
-            sendError(Constants.ERROR_INVALID_INPUT, "File data cannot be empty")
-            return@saveFlow
-        }
-
-        sendProgress(0.05)
-
-        val (uri, outputStream) = entryFactory.createEntry(this, context, conflictResolution)
-            ?: return@saveFlow
-
-        sendProgress(0.1)
-
-        try {
-            FileHelper.writeStream(outputStream, fileData) { writeProgress ->
-                sendProgress(mapProgress(writeProgress, 0.1, 0.9))
+    ): Flow<SaveProgressEvent> =
+        saveFlow {
+            if (fileData.isEmpty()) {
+                sendError(Constants.ERROR_INVALID_INPUT, "File data cannot be empty")
+                return@saveFlow
             }
-        } catch (e: CancellationException) {
-            entryFactory.deleteEntry(context, uri)
-            sendCancelled()
-            throw e
-        } catch (e: IOException) {
-            entryFactory.deleteEntry(context, uri)
-            sendError(Constants.ERROR_FILE_IO, "Failed to write file data: ${e.message}")
-            return@saveFlow
-        }
 
-        entryFactory.finishSave(this, context, uri)
-    }
+            sendProgress(0.05)
+
+            val (uri, outputStream) =
+                entryFactory.createEntry(this, context, conflictResolution)
+                    ?: return@saveFlow
+
+            sendProgress(0.1)
+
+            try {
+                FileHelper.writeStream(outputStream, fileData) { writeProgress ->
+                    sendProgress(mapProgress(writeProgress, 0.1, 0.9))
+                }
+            } catch (e: CancellationException) {
+                entryFactory.deleteEntry(context, uri)
+                sendCancelled()
+                throw e
+            } catch (e: IOException) {
+                entryFactory.deleteEntry(context, uri)
+                sendError(Constants.ERROR_FILE_IO, "Failed to write file data: ${e.message}")
+                return@saveFlow
+            }
+
+            entryFactory.finishSave(this, context, uri)
+        }
 
     /**
      * Saves file from source path with real-time progress streaming.
@@ -67,48 +70,51 @@ abstract class BaseFileSaver(protected val context: Context) {
         filePath: String,
         entryFactory: SaveEntryFactory,
         conflictResolution: ConflictResolution,
-    ): Flow<SaveProgressEvent> = saveFlow {
-        sendProgress(0.05)
+    ): Flow<SaveProgressEvent> =
+        saveFlow {
+            sendProgress(0.05)
 
-        val sourceFile = try {
-            FileHelper.openSourceFile(context, filePath)
-        } catch (_: FileNotFoundException) {
-            sendError(Constants.ERROR_FILE_NOT_FOUND, "Source file not found: $filePath")
-            return@saveFlow
-        } catch (e: SecurityException) {
-            sendError(Constants.ERROR_PERMISSION_DENIED, "Permission denied: ${e.message}")
-            return@saveFlow
-        } catch (e: IllegalArgumentException) {
-            sendError(Constants.ERROR_INVALID_INPUT, e.message ?: "Invalid file path")
-            return@saveFlow
-        }
+            val sourceFile =
+                try {
+                    FileHelper.openSourceFile(context, filePath)
+                } catch (_: FileNotFoundException) {
+                    sendError(Constants.ERROR_FILE_NOT_FOUND, "Source file not found: $filePath")
+                    return@saveFlow
+                } catch (e: SecurityException) {
+                    sendError(Constants.ERROR_PERMISSION_DENIED, "Permission denied: ${e.message}")
+                    return@saveFlow
+                } catch (e: IllegalArgumentException) {
+                    sendError(Constants.ERROR_INVALID_INPUT, e.message ?: "Invalid file path")
+                    return@saveFlow
+                }
 
-        sendProgress(0.1)
+            sendProgress(0.1)
 
-        val (uri, outputStream) = entryFactory.createEntry(this, context, conflictResolution)
-            ?: run {
-                sourceFile.inputStream.close()
+            val (uri, outputStream) =
+                entryFactory.createEntry(this, context, conflictResolution)
+                    ?: run {
+                        sourceFile.inputStream.close()
+                        return@saveFlow
+                    }
+
+            sendProgress(0.15)
+
+            try {
+                FileHelper.copyStream(sourceFile.inputStream, outputStream, sourceFile.totalSize) { copyProgress ->
+                    sendProgress(mapProgress(copyProgress, 0.15, 0.9))
+                }
+            } catch (e: CancellationException) {
+                entryFactory.deleteEntry(context, uri)
+                sendCancelled()
+                throw e
+            } catch (e: IOException) {
+                entryFactory.deleteEntry(context, uri)
+                sendError(Constants.ERROR_FILE_IO, "Failed to copy file: ${e.message}")
                 return@saveFlow
             }
 
-        sendProgress(0.15)
-
-        try {
-            FileHelper.copyStream(sourceFile.inputStream, outputStream, sourceFile.totalSize) { copyProgress ->
-                sendProgress(mapProgress(copyProgress, 0.15, 0.9))
-            }
-        } catch (e: CancellationException) {
-            entryFactory.deleteEntry(context, uri)
-            sendCancelled()
-            throw e
-        } catch (e: IOException) {
-            entryFactory.deleteEntry(context, uri)
-            sendError(Constants.ERROR_FILE_IO, "Failed to copy file: ${e.message}")
-            return@saveFlow
+            entryFactory.finishSave(this, context, uri)
         }
-
-        entryFactory.finishSave(this, context, uri)
-    }
 
     /**
      * Downloads file from network URL and saves directly with real-time progress.
@@ -125,51 +131,57 @@ abstract class BaseFileSaver(protected val context: Context) {
         timeoutMs: Int,
         entryFactory: SaveEntryFactory,
         conflictResolution: ConflictResolution,
-    ): Flow<SaveProgressEvent> = saveFlow {
-        sendProgress(0.02)
+    ): Flow<SaveProgressEvent> =
+        saveFlow {
+            sendProgress(0.02)
 
-        val connectionResult = try {
-            NetworkHelper.openConnection(url, headersJson, timeoutMs)
-        } catch (e: NetworkDownloadException) {
-            val message = if (e.statusCode != null) {
-                "Network download failed (HTTP ${e.statusCode}): ${e.message}"
-            } else {
-                "Network download failed: ${e.message}"
-            }
-            sendError(Constants.ERROR_NETWORK, message)
-            return@saveFlow
-        }
-
-        try {
-            sendProgress(0.05)
-
-            val (uri, outputStream) = entryFactory.createEntry(this, context, conflictResolution)
-                ?: return@saveFlow
-
-            sendProgress(0.1)
-
-            try {
-                FileHelper.copyStream(
-                    connectionResult.inputStream, outputStream, connectionResult.contentLength
-                ) { copyProgress ->
-                    sendProgress(mapProgress(copyProgress, 0.1, 0.9))
+            val connectionResult =
+                try {
+                    NetworkHelper.openConnection(url, headersJson, timeoutMs)
+                } catch (e: NetworkDownloadException) {
+                    val message =
+                        if (e.statusCode != null) {
+                            "Network download failed (HTTP ${e.statusCode}): ${e.message}"
+                        } else {
+                            "Network download failed: ${e.message}"
+                        }
+                    sendError(Constants.ERROR_NETWORK, message)
+                    return@saveFlow
                 }
-            } catch (e: CancellationException) {
-                entryFactory.deleteEntry(context, uri)
-                sendCancelled()
-                throw e
-            } catch (e: IOException) {
-                entryFactory.deleteEntry(context, uri)
-                sendError(Constants.ERROR_FILE_IO, "Failed to stream network data: ${e.message}")
-                return@saveFlow
-            }
 
-            entryFactory.finishSave(this, context, uri)
-        } finally {
             try {
-                connectionResult.connection.disconnect()
-            } catch (_: Exception) {
+                sendProgress(0.05)
+
+                val (uri, outputStream) =
+                    entryFactory.createEntry(this, context, conflictResolution)
+                        ?: return@saveFlow
+
+                sendProgress(0.1)
+
+                try {
+                    FileHelper.copyStream(
+                        connectionResult.inputStream,
+                        outputStream,
+                        connectionResult.contentLength,
+                    ) { copyProgress ->
+                        sendProgress(mapProgress(copyProgress, 0.1, 0.9))
+                    }
+                } catch (e: CancellationException) {
+                    entryFactory.deleteEntry(context, uri)
+                    sendCancelled()
+                    throw e
+                } catch (e: IOException) {
+                    entryFactory.deleteEntry(context, uri)
+                    sendError(Constants.ERROR_FILE_IO, "Failed to stream network data: ${e.message}")
+                    return@saveFlow
+                }
+
+                entryFactory.finishSave(this, context, uri)
+            } finally {
+                try {
+                    connectionResult.connection.disconnect()
+                } catch (_: Exception) {
+                }
             }
         }
-    }
 }

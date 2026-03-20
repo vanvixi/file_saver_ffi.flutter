@@ -9,9 +9,7 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
-
 object NetworkHelper {
-
     /**
      * Result of opening an HTTP connection.
      *
@@ -40,61 +38,64 @@ object NetworkHelper {
         urlString: String,
         headersJson: String?,
         timeoutMs: Int,
-    ): ConnectionResult = withContext(Dispatchers.IO) {
-        val headers = parseHeaders(headersJson)
+    ): ConnectionResult =
+        withContext(Dispatchers.IO) {
+            val headers = parseHeaders(headersJson)
 
-        val url = try {
-            URL(urlString)
-        } catch (_: Exception) {
-            throw NetworkDownloadException("Invalid URL: $urlString")
-        }
-
-        val connection = try {
-            (url.openConnection() as HttpURLConnection).apply {
-                connectTimeout = timeoutMs
-                readTimeout = timeoutMs
-                requestMethod = "GET"
-                instanceFollowRedirects = true
-
-                headers?.forEach { (key, value) ->
-                    setRequestProperty(key, value)
+            val url =
+                try {
+                    URL(urlString)
+                } catch (_: Exception) {
+                    throw NetworkDownloadException("Invalid URL: $urlString")
                 }
-            }
-        } catch (e: Exception) {
-            throw NetworkDownloadException("Failed to open connection: ${e.message}")
-        }
 
-        try {
-            connection.connect()
+            val connection =
+                try {
+                    (url.openConnection() as HttpURLConnection).apply {
+                        connectTimeout = timeoutMs
+                        readTimeout = timeoutMs
+                        requestMethod = "GET"
+                        instanceFollowRedirects = true
 
-            val statusCode = connection.responseCode
-            if (statusCode !in 200..299) {
-                connection.disconnect()
-                throw NetworkDownloadException(
-                    connection.responseMessage ?: "Unknown error",
-                    statusCode,
+                        headers?.forEach { (key, value) ->
+                            setRequestProperty(key, value)
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw NetworkDownloadException("Failed to open connection: ${e.message}")
+                }
+
+            try {
+                connection.connect()
+
+                val statusCode = connection.responseCode
+                if (statusCode !in 200..299) {
+                    connection.disconnect()
+                    throw NetworkDownloadException(
+                        connection.responseMessage ?: "Unknown error",
+                        statusCode,
+                    )
+                }
+
+                val contentLength =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        connection.contentLengthLong
+                    } else {
+                        connection.contentLength.toLong()
+                    }
+
+                ConnectionResult(
+                    inputStream = connection.inputStream,
+                    contentLength = contentLength,
+                    connection = connection,
                 )
+            } catch (e: NetworkDownloadException) {
+                throw e
+            } catch (e: Exception) {
+                connection.disconnect()
+                throw NetworkDownloadException("Connection failed: ${e.message}")
             }
-
-            val contentLength = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                connection.contentLengthLong
-            } else {
-                connection.contentLength.toLong()
-            }
-
-
-            ConnectionResult(
-                inputStream = connection.inputStream,
-                contentLength = contentLength,
-                connection = connection,
-            )
-        } catch (e: NetworkDownloadException) {
-            throw e
-        } catch (e: Exception) {
-            connection.disconnect()
-            throw NetworkDownloadException("Connection failed: ${e.message}")
         }
-    }
 
     /**
      * Parses a JSON string into a Map of HTTP headers.

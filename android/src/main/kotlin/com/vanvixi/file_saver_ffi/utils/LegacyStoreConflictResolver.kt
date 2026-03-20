@@ -20,61 +20,66 @@ object LegacyStoreConflictResolver {
         directory: File,
         baseFileName: String,
         extension: String,
-        conflictResolution: ConflictResolution
-    ): File? = withContext(Dispatchers.IO) {
+        conflictResolution: ConflictResolution,
+    ): File? =
+        withContext(Dispatchers.IO) {
+            val original =
+                File(
+                    directory,
+                    FileHelper.buildFileName(baseFileName, extension),
+                )
 
-        val original = File(
-            directory,
-            FileHelper.buildFileName(baseFileName, extension)
-        )
-
-        if (!original.exists()) {
-            return@withContext original
-        }
-
-        when (conflictResolution) {
-            ConflictResolution.AUTO_RENAME ->
-                autoRename(directory, baseFileName, extension)
-
-            ConflictResolution.OVERWRITE -> {
-                if (original.exists()) {
-                    original.delete()
-                }
-                original
+            if (!original.exists()) {
+                return@withContext original
             }
 
-            ConflictResolution.SKIP ->
-                original
+            when (conflictResolution) {
+                ConflictResolution.AUTO_RENAME -> {
+                    autoRename(directory, baseFileName, extension)
+                }
 
-            ConflictResolution.FAIL ->
-                null
+                ConflictResolution.OVERWRITE -> {
+                    if (original.exists()) {
+                        original.delete()
+                    }
+                    original
+                }
+
+                ConflictResolution.SKIP -> {
+                    original
+                }
+
+                ConflictResolution.FAIL -> {
+                    null
+                }
+            }
         }
-    }
 
     fun findExistingFile(
         directory: File,
         baseFileName: String,
         extension: String,
     ): File? {
-        val original = File(
-            directory,
-            FileHelper.buildFileName(baseFileName, extension)
-        )
+        val original =
+            File(
+                directory,
+                FileHelper.buildFileName(baseFileName, extension),
+            )
         return if (original.exists()) original else null
     }
 
     private fun autoRename(
         directory: File,
         baseFileName: String,
-        extension: String
+        extension: String,
     ): File {
-
         var index = 1
         while (true) {
-            val candidate = File(
-                directory,
-                "$baseFileName ($index).$extension"
-            )
+            val candidate =
+                File(
+                    directory,
+                    "$baseFileName ($index).$extension",
+                )
 
             if (!candidate.exists()) {
                 return candidate

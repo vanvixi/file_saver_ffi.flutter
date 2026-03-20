@@ -10,7 +10,7 @@ import java.io.IOException
  */
 class UnsupportedFormatException(
     val format: String,
-    message: String
+    message: String,
 ) : Exception(message)
 
 /**
@@ -19,7 +19,7 @@ class UnsupportedFormatException(
  * @property message Error message with file details
  */
 class FileExistsException(
-    message: String
+    message: String,
 ) : Exception(message)
 
 /**

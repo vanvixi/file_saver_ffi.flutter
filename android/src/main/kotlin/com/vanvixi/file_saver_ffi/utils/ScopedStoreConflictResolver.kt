@@ -27,32 +27,36 @@ object ScopedStoreConflictResolver {
         dirPath: String,
         baseFileName: String,
         extension: String,
-        conflictResolution: ConflictResolution
-    ): String = withContext(Dispatchers.IO) {
+        conflictResolution: ConflictResolution,
+    ): String =
+        withContext(Dispatchers.IO) {
+            val originalName = FileHelper.buildFileName(baseFileName, extension)
+            val existingUri =
+                findExistingFileUri(context, contentUri, dirPath, originalName)
+                    ?: return@withContext originalName
 
-        val originalName = FileHelper.buildFileName(baseFileName, extension)
-        val existingUri = findExistingFileUri(context, contentUri, dirPath, originalName)
-            ?: return@withContext originalName
+            when (conflictResolution) {
+                // MediaStore automatically handles conflicts by appending numbers
+                // photo.jpg → photo (1).jpg → photo (2).jpg
+                ConflictResolution.AUTO_RENAME -> {
+                    originalName
+                }
 
-        when (conflictResolution) {
-            // MediaStore automatically handles conflicts by appending numbers
-            // photo.jpg → photo (1).jpg → photo (2).jpg
-            ConflictResolution.AUTO_RENAME ->
-                originalName
+                // Delete existing file and reuse the name
+                ConflictResolution.OVERWRITE -> {
+                    context.contentResolver.delete(existingUri, null, null)
+                    originalName
+                }
 
-            // Delete existing file and reuse the name
-            ConflictResolution.OVERWRITE -> {
-                context.contentResolver.delete(existingUri, null, null)
-                originalName
+                ConflictResolution.SKIP -> {
+                    originalName
+                }
+
+                ConflictResolution.FAIL -> {
+                    throw FileExistsException("File already exists: $baseFileName.$extension")
+                }
             }
-
-            ConflictResolution.SKIP ->
-                originalName
-
-            ConflictResolution.FAIL ->
-                throw FileExistsException("File already exists: $baseFileName.$extension")
         }
-    }
 
     /**
      * Find existing file URI in MediaStore
@@ -63,23 +67,24 @@ object ScopedStoreConflictResolver {
         context: Context,
         contentUri: Uri,
         dirPath: String,
-        displayName: String
+        displayName: String,
     ): Uri? {
         val normalizedPath = normalizeRelativePath(dirPath)
 
         val projection = arrayOf(MediaStore.MediaColumns._ID)
         val selection =
             "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND " +
-                    "${MediaStore.MediaColumns.RELATIVE_PATH}=?"
+                "${MediaStore.MediaColumns.RELATIVE_PATH}=?"
         val selectionArgs = arrayOf(displayName, normalizedPath)
 
-        val cursor = context.contentResolver.query(
-            contentUri,
-            projection,
-            selection,
-            selectionArgs,
-            null
-        ) ?: return null
+        val cursor =
+            context.contentResolver.query(
+                contentUri,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+            ) ?: return null
 
         cursor.use {
             if (it.moveToFirst()) {
@@ -91,6 +96,5 @@ object ScopedStoreConflictResolver {
         return null
     }
 
-    private fun normalizeRelativePath(dirPath: String): String =
-        if (dirPath.endsWith("/")) dirPath else "$dirPath/"
+    private fun normalizeRelativePath(dirPath: String): String = if (dirPath.endsWith("/")) dirPath else "$dirPath/"
 }

@@ -6,9 +6,11 @@ import kotlinx.coroutines.channels.ProducerScope
 /**
  * Maps progress from source range [0.0-1.0] to target range [start-end].
  */
-internal fun mapProgress(progress: Double, start: Double, end: Double): Double {
-    return start + (progress * (end - start))
-}
+internal fun mapProgress(
+    progress: Double,
+    start: Double,
+    end: Double,
+): Double = start + (progress * (end - start))
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Event Sending Extensions
@@ -24,7 +26,10 @@ internal fun ProducerScope<SaveProgressEvent>.sendProgress(progress: Double) {
 /**
  * Sends an error event.
  */
-internal fun ProducerScope<SaveProgressEvent>.sendError(code: String, message: String) {
+internal fun ProducerScope<SaveProgressEvent>.sendError(
+    code: String,
+    message: String,
+) {
     trySend(SaveProgressEvent.Error(code, message))
 }
 

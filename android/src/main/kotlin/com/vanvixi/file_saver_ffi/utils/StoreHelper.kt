@@ -7,7 +7,9 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import com.vanvixi.file_saver_ffi.exception.FileExistsException
-import com.vanvixi.file_saver_ffi.models.*
+import com.vanvixi.file_saver_ffi.models.ConflictResolution
+import com.vanvixi.file_saver_ffi.models.FileType
+import com.vanvixi.file_saver_ffi.models.SaveLocation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -45,19 +47,29 @@ object StoreHelper {
         saveLocation: SaveLocation,
         subDir: String? = null,
         conflictResolution: ConflictResolution,
-    ): Pair<Uri, OutputStream> = withContext(Dispatchers.IO) {
-        val isVersionQPlus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+    ): Pair<Uri, OutputStream> =
+        withContext(Dispatchers.IO) {
+            val isVersionQPlus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
-        if (isVersionQPlus) {
-            return@withContext createEntryForScopedStorage(
-                context, fileType, baseFileName, saveLocation, subDir, conflictResolution
-            )
-        } else {
-            return@withContext createEntryForLegacyStorage(
-                fileType, baseFileName, saveLocation, subDir, conflictResolution
-            )
+            if (isVersionQPlus) {
+                return@withContext createEntryForScopedStorage(
+                    context,
+                    fileType,
+                    baseFileName,
+                    saveLocation,
+                    subDir,
+                    conflictResolution,
+                )
+            } else {
+                return@withContext createEntryForLegacyStorage(
+                    fileType,
+                    baseFileName,
+                    saveLocation,
+                    subDir,
+                    conflictResolution,
+                )
+            }
         }
-    }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun createEntryForScopedStorage(
@@ -67,35 +79,40 @@ object StoreHelper {
         saveLocation: SaveLocation,
         subDir: String? = null,
         conflictResolution: ConflictResolution,
-    ): Pair<Uri, OutputStream> = withContext(Dispatchers.IO) {
-        val (contentUri, dirPath) = FileHelper.scopedStoreTargetFor(saveLocation, subDir)
+    ): Pair<Uri, OutputStream> =
+        withContext(Dispatchers.IO) {
+            val (contentUri, dirPath) = FileHelper.scopedStoreTargetFor(saveLocation, subDir)
 
-        val fileName = ScopedStoreConflictResolver.resolve(
-            context,
-            contentUri,
-            dirPath,
-            baseFileName,
-            fileType.ext,
-            conflictResolution
-        )
+            val fileName =
+                ScopedStoreConflictResolver.resolve(
+                    context,
+                    contentUri,
+                    dirPath,
+                    baseFileName,
+                    fileType.ext,
+                    conflictResolution,
+                )
 
-        val resolver = context.contentResolver
+            val resolver = context.contentResolver
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-            put(MediaStore.MediaColumns.MIME_TYPE, fileType.mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, dirPath)
-            put(MediaStore.MediaColumns.IS_PENDING, 1)
+            val contentValues =
+                ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                    put(MediaStore.MediaColumns.MIME_TYPE, fileType.mimeType)
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, dirPath)
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+
+            val uri =
+                resolver.insert(contentUri, contentValues)
+                    ?: throw IOException("Failed to create MediaStore entry: $fileName")
+
+            val outputStream =
+                resolver.openOutputStream(uri)
+                    ?: throw IOException("Failed to open OutputStream: $fileName")
+
+            Pair(uri, outputStream)
         }
-
-        val uri = resolver.insert(contentUri, contentValues)
-            ?: throw IOException("Failed to create MediaStore entry: $fileName")
-
-        val outputStream = resolver.openOutputStream(uri)
-            ?: throw IOException("Failed to open OutputStream: $fileName")
-
-        Pair(uri, outputStream)
-    }
 
     private suspend fun createEntryForLegacyStorage(
         fileType: FileType,
@@ -103,21 +120,25 @@ object StoreHelper {
         saveLocation: SaveLocation,
         subDir: String? = null,
         conflictResolution: ConflictResolution,
-    ): Pair<Uri, OutputStream> = withContext(Dispatchers.IO) {
-        val directory = FileHelper.legacyStoreDirectoryFor(saveLocation, subDir)
-        FileHelper.ensureDirectoryExists(directory).getOrElse { error ->
-            throw IOException("Failed to create directory: ${error.message}")
+    ): Pair<Uri, OutputStream> =
+        withContext(Dispatchers.IO) {
+            val directory = FileHelper.legacyStoreDirectoryFor(saveLocation, subDir)
+            FileHelper.ensureDirectoryExists(directory).getOrElse { error ->
+                throw IOException("Failed to create directory: ${error.message}")
+            }
+
+            val file =
+                LegacyStoreConflictResolver.resolve(
+                    directory,
+                    baseFileName,
+                    fileType.ext,
+                    conflictResolution,
+                ) ?: throw FileExistsException("File already exists: $baseFileName.${fileType.ext}")
+
+            val uri = Uri.fromFile(file)
+
+            Pair(uri, FileOutputStream(file))
         }
-
-        val file = LegacyStoreConflictResolver.resolve(
-            directory, baseFileName, fileType.ext, conflictResolution
-        ) ?: throw FileExistsException("File already exists: $baseFileName.${fileType.ext}")
-
-        val uri = Uri.fromFile(file)
-
-        Pair(uri, FileOutputStream(file))
-    }
-
 
     /**
      * Marks MediaStore entry as complete (removes IS_PENDING flag)
@@ -132,14 +153,18 @@ object StoreHelper {
      * markEntryComplete(context, uri)  // CRITICAL: Makes file visible
      * ```
      */
-    suspend fun markEntryComplete(context: Context, uri: Uri) = withContext(Dispatchers.IO) {
+    suspend fun markEntryComplete(
+        context: Context,
+        uri: Uri,
+    ) = withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return@withContext
         }
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.IS_PENDING, 0)
-        }
+        val contentValues =
+            ContentValues().apply {
+                put(MediaStore.Images.Media.IS_PENDING, 0)
+            }
         context.contentResolver.update(uri, contentValues, null, null)
     }
 
@@ -153,25 +178,34 @@ object StoreHelper {
      * @param uri Content URI
      * @return File path if available, empty string otherwise
      */
-    suspend fun uriToFilePath(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
-        try {
-            // Try to get DATA column (file path)
-            context.contentResolver.query(
-                uri, arrayOf(MediaStore.Images.Media.DATA), null, null, null
-            )?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
-                    if (columnIndex >= 0) {
-                        return@withContext cursor.getString(columnIndex) ?: ""
+    suspend fun uriToFilePath(
+        context: Context,
+        uri: Uri,
+    ): String =
+        withContext(Dispatchers.IO) {
+            try {
+                // Try to get DATA column (file path)
+                context.contentResolver
+                    .query(
+                        uri,
+                        arrayOf(MediaStore.Images.Media.DATA),
+                        null,
+                        null,
+                        null,
+                    )?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            val columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
+                            if (columnIndex >= 0) {
+                                return@withContext cursor.getString(columnIndex) ?: ""
+                            }
+                        }
                     }
-                }
+            } catch (_: Exception) {
+                // Ignore errors, fall back to empty string
             }
-        } catch (_: Exception) {
-            // Ignore errors, fall back to empty string
-        }
 
-        // Fallback: Return empty string
-        // On Android 10+, direct file paths are often not available
-        ""
-    }
+            // Fallback: Return empty string
+            // On Android 10+, direct file paths are often not available
+            ""
+        }
 }

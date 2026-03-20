@@ -28,8 +28,10 @@ import kotlin.coroutines.resume
  *
  * Directory picking is handled by the dir_picker package.
  */
-class FileSaverFfiPlugin : FlutterPlugin, ActivityAware, RequestPermissionsResultListener {
-
+class FileSaverFfiPlugin :
+    FlutterPlugin,
+    ActivityAware,
+    RequestPermissionsResultListener {
     companion object {
         private const val TAG = "FileSaverFfi"
         private const val REQUEST_CODE_STORAGE_PERMISSION = 43892
@@ -101,12 +103,13 @@ class FileSaverFfiPlugin : FlutterPlugin, ActivityAware, RequestPermissionsResul
     private fun setupPermissionLauncher(activity: Activity) {
         if (activity !is ComponentActivity) return
 
-        permissionLauncher = activity.activityResultRegistry.register(
-            PERMISSION_REGISTRY_KEY,
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            handlePermissionResult(isGranted)
-        }
+        permissionLauncher =
+            activity.activityResultRegistry.register(
+                PERMISSION_REGISTRY_KEY,
+                ActivityResultContracts.RequestPermission(),
+            ) { isGranted: Boolean ->
+                handlePermissionResult(isGranted)
+            }
     }
 
     /**
@@ -119,53 +122,54 @@ class FileSaverFfiPlugin : FlutterPlugin, ActivityAware, RequestPermissionsResul
      * 3. Suspends until user responds via [suspendCancellableCoroutine]
      */
     private fun setupStoragePermissionHandler() {
-        FileSaver.storagePermissionHandler = StoragePermissionHandler {
-            val currentActivity = activity ?: return@StoragePermissionHandler false
+        FileSaver.storagePermissionHandler =
+            StoragePermissionHandler {
+                val currentActivity = activity ?: return@StoragePermissionHandler false
 
-            // Double-check: might have been granted since FileSaver checked
-            if (ContextCompat.checkSelfPermission(
-                    currentActivity,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                return@StoragePermissionHandler true
-            }
+                // Double-check: might have been granted since FileSaver checked
+                if (ContextCompat.checkSelfPermission(
+                        currentActivity,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    return@StoragePermissionHandler true
+                }
 
-            // Must launch permission dialog on Main thread
-            withContext(Dispatchers.Main) {
-                suspendCancellableCoroutine { continuation ->
-                    pendingPermissionContinuation = continuation
+                // Must launch permission dialog on Main thread
+                withContext(Dispatchers.Main) {
+                    suspendCancellableCoroutine { continuation ->
+                        pendingPermissionContinuation = continuation
 
-                    continuation.invokeOnCancellation {
-                        pendingPermissionContinuation = null
-                    }
-
-                    // Try modern launcher first (ComponentActivity)
-                    val launcher = permissionLauncher
-                    if (launcher != null) {
-                        try {
-                            launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            return@suspendCancellableCoroutine
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Permission launcher failed, falling back: ${e.message}")
+                        continuation.invokeOnCancellation {
+                            pendingPermissionContinuation = null
                         }
-                    }
 
-                    // Fallback: ActivityCompat for non-ComponentActivity
-                    val act = activity
-                    if (act != null) {
-                        ActivityCompat.requestPermissions(
-                            act,
-                            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                            REQUEST_CODE_STORAGE_PERMISSION
-                        )
-                    } else {
-                        pendingPermissionContinuation = null
-                        continuation.resume(false)
+                        // Try modern launcher first (ComponentActivity)
+                        val launcher = permissionLauncher
+                        if (launcher != null) {
+                            try {
+                                launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                return@suspendCancellableCoroutine
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Permission launcher failed, falling back: ${e.message}")
+                            }
+                        }
+
+                        // Fallback: ActivityCompat for non-ComponentActivity
+                        val act = activity
+                        if (act != null) {
+                            ActivityCompat.requestPermissions(
+                                act,
+                                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                                REQUEST_CODE_STORAGE_PERMISSION,
+                            )
+                        } else {
+                            pendingPermissionContinuation = null
+                            continuation.resume(false)
+                        }
                     }
                 }
             }
-        }
     }
 
     private fun handlePermissionResult(isGranted: Boolean) {
@@ -183,11 +187,12 @@ class FileSaverFfiPlugin : FlutterPlugin, ActivityAware, RequestPermissionsResul
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ): Boolean {
         if (requestCode != REQUEST_CODE_STORAGE_PERMISSION) return false
 
-        val granted = grantResults.isNotEmpty() &&
+        val granted =
+            grantResults.isNotEmpty() &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED
         handlePermissionResult(granted)
         return true

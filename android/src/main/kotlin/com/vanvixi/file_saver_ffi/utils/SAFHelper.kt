@@ -18,7 +18,6 @@ import java.io.OutputStream
  * and apps can then read/write files to those directories.
  */
 object SAFHelper {
-
     /**
      * Creates a file in the user-selected directory.
      *
@@ -36,55 +35,58 @@ object SAFHelper {
         treeUri: Uri,
         fileType: FileType,
         baseFileName: String,
-        conflictResolution: ConflictResolution
-    ): Pair<Uri, OutputStream> = withContext(Dispatchers.IO) {
-        val fileName = FileHelper.buildFileName(baseFileName, fileType.ext)
-        val mimeType = fileType.mimeType
-        val docDir = DocumentFile.fromTreeUri(context, treeUri)
-            ?: throw IOException("Cannot access directory: $treeUri")
+        conflictResolution: ConflictResolution,
+    ): Pair<Uri, OutputStream> =
+        withContext(Dispatchers.IO) {
+            val fileName = FileHelper.buildFileName(baseFileName, fileType.ext)
+            val mimeType = fileType.mimeType
+            val docDir =
+                DocumentFile.fromTreeUri(context, treeUri)
+                    ?: throw IOException("Cannot access directory: $treeUri")
 
-        if (!docDir.isDirectory) {
-            throw IOException("Not a directory: $treeUri")
-        }
+            if (!docDir.isDirectory) {
+                throw IOException("Not a directory: $treeUri")
+            }
 
-        if (!docDir.canWrite()) {
-            throw IOException("Cannot write to directory: $treeUri")
-        }
+            if (!docDir.canWrite()) {
+                throw IOException("Cannot write to directory: $treeUri")
+            }
 
-        // Check for existing file
-        val existingFile = docDir.findFile(fileName)
+            // Check for existing file
+            val existingFile = docDir.findFile(fileName)
 
-        if (existingFile != null && existingFile.exists()) {
-            when (conflictResolution) {
-                ConflictResolution.AUTO_RENAME -> {
-                    // Generate unique name: photo.jpg → photo (1).jpg
-                    val uniqueName = generateUniqueName(docDir, fileName)
-                    return@withContext createNewFile(context, docDir, uniqueName, mimeType)
-                }
+            if (existingFile != null && existingFile.exists()) {
+                when (conflictResolution) {
+                    ConflictResolution.AUTO_RENAME -> {
+                        // Generate unique name: photo.jpg → photo (1).jpg
+                        val uniqueName = generateUniqueName(docDir, fileName)
+                        return@withContext createNewFile(context, docDir, uniqueName, mimeType)
+                    }
 
-                ConflictResolution.OVERWRITE -> {
-                    // Delete existing and create new
-                    existingFile.delete()
-                    return@withContext createNewFile(context, docDir, fileName, mimeType)
-                }
+                    ConflictResolution.OVERWRITE -> {
+                        // Delete existing and create new
+                        existingFile.delete()
+                        return@withContext createNewFile(context, docDir, fileName, mimeType)
+                    }
 
-                ConflictResolution.SKIP -> {
-                    // Return existing file's URI with a dummy output stream that does nothing
-                    val uri = existingFile.uri
-                    val outputStream = context.contentResolver.openOutputStream(uri, "w")
-                        ?: throw IOException("Cannot open existing file: $fileName")
-                    return@withContext Pair(uri, outputStream)
-                }
+                    ConflictResolution.SKIP -> {
+                        // Return existing file's URI with a dummy output stream that does nothing
+                        val uri = existingFile.uri
+                        val outputStream =
+                            context.contentResolver.openOutputStream(uri, "w")
+                                ?: throw IOException("Cannot open existing file: $fileName")
+                        return@withContext Pair(uri, outputStream)
+                    }
 
-                ConflictResolution.FAIL -> {
-                    throw FileExistsException("File already exists: $fileName")
+                    ConflictResolution.FAIL -> {
+                        throw FileExistsException("File already exists: $fileName")
+                    }
                 }
             }
-        }
 
-        // No conflict, create new file
-        createNewFile(context, docDir, fileName, mimeType)
-    }
+            // No conflict, create new file
+            createNewFile(context, docDir, fileName, mimeType)
+        }
 
     /**
      * Creates a new file in the directory.
@@ -93,13 +95,15 @@ object SAFHelper {
         context: Context,
         docDir: DocumentFile,
         fileName: String,
-        mimeType: String
+        mimeType: String,
     ): Pair<Uri, OutputStream> {
-        val newFile = docDir.createFile(mimeType, fileName)
-            ?: throw IOException("Failed to create file: $fileName")
+        val newFile =
+            docDir.createFile(mimeType, fileName)
+                ?: throw IOException("Failed to create file: $fileName")
 
-        val outputStream = context.contentResolver.openOutputStream(newFile.uri)
-            ?: throw IOException("Failed to open output stream: $fileName")
+        val outputStream =
+            context.contentResolver.openOutputStream(newFile.uri)
+                ?: throw IOException("Failed to open output stream: $fileName")
 
         return Pair(newFile.uri, outputStream)
     }
@@ -107,7 +111,10 @@ object SAFHelper {
     /**
      * Generates a unique file name by appending (1), (2), etc.
      */
-    private fun generateUniqueName(docDir: DocumentFile, originalName: String): String {
+    private fun generateUniqueName(
+        docDir: DocumentFile,
+        originalName: String,
+    ): String {
         val dotIndex = originalName.lastIndexOf('.')
         val baseName = if (dotIndex > 0) originalName.substring(0, dotIndex) else originalName
         val extension = if (dotIndex > 0) originalName.substring(dotIndex) else ""

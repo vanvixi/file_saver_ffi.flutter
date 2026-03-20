@@ -1,6 +1,5 @@
 package com.vanvixi.file_saver_ffi.utils
 
-
 object Constants {
     // ===========================================
     // Error Codes

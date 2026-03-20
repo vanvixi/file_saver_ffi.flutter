@@ -18,29 +18,34 @@ import kotlinx.coroutines.flow.flowOn
  * Saver for image files with format validation.
  * Validates image format before saving to MediaStore.
  */
-class ImageSaver(context: Context) : BaseFileSaver(context) {
-
+class ImageSaver(
+    context: Context,
+) : BaseFileSaver(context) {
     override fun saveBytes(
         fileData: ByteArray,
         entryFactory: SaveEntryFactory,
         conflictResolution: ConflictResolution,
-    ): Flow<SaveProgressEvent> = flow {
-        if (!validateImageFormat(entryFactory)) return@flow
+    ): Flow<SaveProgressEvent> =
+        flow {
+            if (!validateImageFormat(entryFactory)) return@flow
 
-        super.saveBytes(fileData, entryFactory, conflictResolution)
-            .collect { event -> emit(event) }
-    }.flowOn(Dispatchers.IO)
+            super
+                .saveBytes(fileData, entryFactory, conflictResolution)
+                .collect { event -> emit(event) }
+        }.flowOn(Dispatchers.IO)
 
     override fun saveFile(
         filePath: String,
         entryFactory: SaveEntryFactory,
         conflictResolution: ConflictResolution,
-    ): Flow<SaveProgressEvent> = flow {
-        if (!validateImageFormat(entryFactory)) return@flow
+    ): Flow<SaveProgressEvent> =
+        flow {
+            if (!validateImageFormat(entryFactory)) return@flow
 
-        super.saveFile(filePath, entryFactory, conflictResolution)
-            .collect { event -> emit(event) }
-    }.flowOn(Dispatchers.IO)
+            super
+                .saveFile(filePath, entryFactory, conflictResolution)
+                .collect { event -> emit(event) }
+        }.flowOn(Dispatchers.IO)
 
     override fun saveNetwork(
         url: String,
@@ -48,12 +53,14 @@ class ImageSaver(context: Context) : BaseFileSaver(context) {
         timeoutMs: Int,
         entryFactory: SaveEntryFactory,
         conflictResolution: ConflictResolution,
-    ): Flow<SaveProgressEvent> = flow {
-        if (!validateImageFormat(entryFactory)) return@flow
+    ): Flow<SaveProgressEvent> =
+        flow {
+            if (!validateImageFormat(entryFactory)) return@flow
 
-        super.saveNetwork(url, headersJson, timeoutMs, entryFactory, conflictResolution)
-            .collect { event -> emit(event) }
-    }.flowOn(Dispatchers.IO)
+            super
+                .saveNetwork(url, headersJson, timeoutMs, entryFactory, conflictResolution)
+                .collect { event -> emit(event) }
+        }.flowOn(Dispatchers.IO)
 
     /**
      * Validates image format for MediaStore entries.
@@ -61,9 +68,7 @@ class ImageSaver(context: Context) : BaseFileSaver(context) {
      *
      * @return true if valid or SAF, false if invalid (error emitted)
      */
-    private suspend fun FlowCollector<SaveProgressEvent>.validateImageFormat(
-        entryFactory: SaveEntryFactory
-    ): Boolean {
+    private suspend fun FlowCollector<SaveProgressEvent>.validateImageFormat(entryFactory: SaveEntryFactory): Boolean {
         if (entryFactory is SaveEntryFactory.MediaStore) {
             try {
                 FormatValidator.validateImageFormat(entryFactory.fileType)
@@ -72,7 +77,7 @@ class ImageSaver(context: Context) : BaseFileSaver(context) {
                     SaveProgressEvent.Error(
                         Constants.ERROR_UNSUPPORTED_FORMAT,
                         e.message ?: "Unsupported format: ${entryFactory.fileType.ext}",
-                    )
+                    ),
                 )
                 return false
             }

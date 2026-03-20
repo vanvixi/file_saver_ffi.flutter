@@ -11,7 +11,6 @@ import com.vanvixi.file_saver_ffi.models.FileType
  * Files are written as raw bytes - no encoding/decoding is performed.
  */
 object FormatValidator {
-
     /**
      * Validates image format.
      * Only checks that the MIME type is an image type.
@@ -42,5 +41,3 @@ object FormatValidator {
         }
     }
 }
-
-

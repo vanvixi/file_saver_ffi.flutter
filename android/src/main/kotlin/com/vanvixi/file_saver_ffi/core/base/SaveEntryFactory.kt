@@ -22,7 +22,6 @@ import java.io.OutputStream
  * (gallery, downloads, etc.) and saving to user-selected directories via SAF.
  */
 sealed class SaveEntryFactory {
-
     /**
      * Creates an entry with standardized error handling.
      * Returns null and sends error event if creation fails.
@@ -30,7 +29,7 @@ sealed class SaveEntryFactory {
     abstract suspend fun createEntry(
         scope: ProducerScope<SaveProgressEvent>,
         context: Context,
-        conflictResolution: ConflictResolution
+        conflictResolution: ConflictResolution,
     ): Pair<Uri, OutputStream>?
 
     /**
@@ -48,7 +47,10 @@ sealed class SaveEntryFactory {
     /**
      * Deletes an entry on error/cancellation.
      */
-    abstract fun deleteEntry(context: Context, uri: Uri)
+    abstract fun deleteEntry(
+        context: Context,
+        uri: Uri,
+    )
 
     /**
      * Completes save operation (progress 0.9 → 1.0 → Success).
@@ -56,7 +58,7 @@ sealed class SaveEntryFactory {
     abstract suspend fun finishSave(
         scope: ProducerScope<SaveProgressEvent>,
         context: Context,
-        uri: Uri
+        uri: Uri,
     )
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -75,18 +77,21 @@ sealed class SaveEntryFactory {
         val fileType: FileType,
         val baseFileName: String,
         val saveLocation: SaveLocation,
-        val subDir: String?
+        val subDir: String?,
     ) : SaveEntryFactory() {
-
         override suspend fun createEntry(
             scope: ProducerScope<SaveProgressEvent>,
             context: Context,
-            conflictResolution: ConflictResolution
-        ): Pair<Uri, OutputStream>? {
-            return try {
+            conflictResolution: ConflictResolution,
+        ): Pair<Uri, OutputStream>? =
+            try {
                 StoreHelper.createEntry(
-                    context, fileType, baseFileName,
-                    saveLocation, subDir, conflictResolution
+                    context,
+                    fileType,
+                    baseFileName,
+                    saveLocation,
+                    subDir,
+                    conflictResolution,
                 )
             } catch (e: IOException) {
                 scope.sendError(Constants.ERROR_FILE_IO, "Failed to create MediaStore entry: ${e.message}")
@@ -95,15 +100,16 @@ sealed class SaveEntryFactory {
                 scope.sendError(Constants.ERROR_FILE_EXISTS, e.message ?: "File already exists")
                 null
             }
-        }
 
         override suspend fun createEntryDirect(
             context: Context,
             conflictResolution: ConflictResolution,
-        ): Pair<Uri, OutputStream> =
-            StoreHelper.createEntry(context, fileType, baseFileName, saveLocation, subDir, conflictResolution)
+        ): Pair<Uri, OutputStream> = StoreHelper.createEntry(context, fileType, baseFileName, saveLocation, subDir, conflictResolution)
 
-        override fun deleteEntry(context: Context, uri: Uri) {
+        override fun deleteEntry(
+            context: Context,
+            uri: Uri,
+        ) {
             try {
                 context.contentResolver.delete(uri, null, null)
             } catch (_: Exception) {
@@ -113,7 +119,7 @@ sealed class SaveEntryFactory {
         override suspend fun finishSave(
             scope: ProducerScope<SaveProgressEvent>,
             context: Context,
-            uri: Uri
+            uri: Uri,
         ) {
             scope.sendProgress(0.9)
             try {
@@ -139,17 +145,20 @@ sealed class SaveEntryFactory {
     data class SAF(
         val treeUri: Uri,
         val fileType: FileType,
-        val baseFileName: String
+        val baseFileName: String,
     ) : SaveEntryFactory() {
-
         override suspend fun createEntry(
             scope: ProducerScope<SaveProgressEvent>,
             context: Context,
-            conflictResolution: ConflictResolution
-        ): Pair<Uri, OutputStream>? {
-            return try {
+            conflictResolution: ConflictResolution,
+        ): Pair<Uri, OutputStream>? =
+            try {
                 SAFHelper.createFileInDirectory(
-                    context, treeUri, fileType, baseFileName, conflictResolution
+                    context,
+                    treeUri,
+                    fileType,
+                    baseFileName,
+                    conflictResolution,
                 )
             } catch (e: IOException) {
                 scope.sendError(Constants.ERROR_FILE_IO, "Failed to create file: ${e.message}")
@@ -158,15 +167,16 @@ sealed class SaveEntryFactory {
                 scope.sendError(Constants.ERROR_FILE_EXISTS, e.message ?: "File already exists")
                 null
             }
-        }
 
         override suspend fun createEntryDirect(
             context: Context,
             conflictResolution: ConflictResolution,
-        ): Pair<Uri, OutputStream> =
-            SAFHelper.createFileInDirectory(context, treeUri, fileType, baseFileName, conflictResolution)
+        ): Pair<Uri, OutputStream> = SAFHelper.createFileInDirectory(context, treeUri, fileType, baseFileName, conflictResolution)
 
-        override fun deleteEntry(context: Context, uri: Uri) {
+        override fun deleteEntry(
+            context: Context,
+            uri: Uri,
+        ) {
             try {
                 DocumentFile.fromSingleUri(context, uri)?.delete()
             } catch (_: Exception) {
@@ -176,7 +186,7 @@ sealed class SaveEntryFactory {
         override suspend fun finishSave(
             scope: ProducerScope<SaveProgressEvent>,
             context: Context,
-            uri: Uri
+            uri: Uri,
         ) {
             scope.sendProgress(0.9)
             scope.sendProgress(1.0)

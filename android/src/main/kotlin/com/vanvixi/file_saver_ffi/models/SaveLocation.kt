@@ -19,7 +19,9 @@ enum class SaveLocation {
     DOWNLOADS,
 
     /** MediaStore.Images.Media (DCIM/ directory - camera photos) */
-    DCIM;
+    DCIM,
+
+    ;
 
     companion object {
         /**
@@ -28,8 +30,6 @@ enum class SaveLocation {
          * @param value The index from Dart enum (0-4)
          * @return Corresponding SaveLocation, defaults to DOWNLOADS if invalid
          */
-        fun fromInt(value: Int): SaveLocation {
-            return entries.getOrNull(value) ?: DOWNLOADS
-        }
+        fun fromInt(value: Int): SaveLocation = entries.getOrNull(value) ?: DOWNLOADS
     }
 }
