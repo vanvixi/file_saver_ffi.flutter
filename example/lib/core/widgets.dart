@@ -278,12 +278,7 @@ class OpenFileButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: () async {
         try {
-          final canOpen = await FileSaver.canOpenFile(uri);
-          if (!canOpen) {
-            onError('File not found.');
-            return;
-          }
-          FileSaver.openFile(uri);
+          await FileSaver.openFile(uri);
         } catch (e) {
           onError(e);
         }
