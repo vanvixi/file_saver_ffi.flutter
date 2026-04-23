@@ -189,7 +189,7 @@ abstract class FileSaverPlatform {
   }) async {
     try {
       final location = await DirPicker.pick(
-        androidOptions: AndroidOptions(shouldPersist: shouldPersist),
+        options: AndroidOptions(shouldPersist: shouldPersist),
       );
       if (location == null) return null;
       return PickedDirectoryLocation(uri: location.uri!);

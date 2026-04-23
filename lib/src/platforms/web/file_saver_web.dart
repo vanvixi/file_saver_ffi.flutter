@@ -45,7 +45,7 @@ class FileSaverWeb extends FileSaverPlatform {
     try {
       final location = await dp.DirPicker.pick();
       if (location == null) return null; // user cancelled
-      if (location is! dp.WebSelectedLocation) {
+      if (location is! dp.WebPickedLocation) {
         throw const NativePlatformException('Unexpected picker result on web.');
       }
 
