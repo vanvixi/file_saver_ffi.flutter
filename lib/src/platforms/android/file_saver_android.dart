@@ -52,7 +52,7 @@ class FileSaverAndroid extends FileSaverPlatform {
       bool cleanedUp = false;
       late final bindings.ProgressCallback callback;
 
-      final jByteArray = JByteArray.from(fileBytes);
+      final jByteArray = JByteArray.of(fileBytes);
       final jFileName = fileName.toJString();
       final jExtension = fileType.ext.toJString();
       final jMimeType = fileType.mimeType.toJString();
@@ -326,7 +326,7 @@ class FileSaverAndroid extends FileSaverPlatform {
       bool cleanedUp = false;
       late final bindings.ProgressCallback callback;
 
-      final jByteArray = JByteArray.from(fileBytes);
+      final jByteArray = JByteArray.of(fileBytes);
       final jDirectoryUri = directoryUri.toJString();
       final jBaseFileName = baseFileName.toJString();
       final jExtension = extension.toJString();

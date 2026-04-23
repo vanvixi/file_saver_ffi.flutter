@@ -152,7 +152,7 @@ class AndroidFileSaverSink implements FileSaverSink {
 
   /// Fire-and-forget chunk write (used by [add]).
   void _dispatchChunk(List<int> data) {
-    final jData = JByteArray.from(data);
+    final jData = JByteArray.of(data);
     bindings.ProgressCallback? callback;
     callback = bindings.ProgressCallback.implement(
       bindings.$ProgressCallback(
@@ -191,7 +191,7 @@ class AndroidFileSaverSink implements FileSaverSink {
   /// is not sent until the previous one has been written to the stream.
   Future<void> _writeChunkAwaited(List<int> data) {
     final completer = Completer<void>();
-    final jData = JByteArray.from(data);
+    final jData = JByteArray.of(data);
     bindings.ProgressCallback? callback;
     callback = bindings.ProgressCallback.implement(
       bindings.$ProgressCallback(

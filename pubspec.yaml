@@ -25,7 +25,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   ffi: ^2.2.0
-  jni: ^0.15.2
+  jni: ^1.0.0
   path: ^1.9.1
   path_provider_windows: ^2.3.0
   xdg_directories: ^1.1.0
@@ -37,7 +37,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   ffigen: ^20.1.1
-  jnigen: ^0.15.0
+  jnigen: ^0.16.0
 
 flutter:
   plugin:
