@@ -21,24 +21,24 @@ class WebFileSaverSink implements FileSaverSink {
     required FileSystemWritableFileStream writable,
     required String resolvedName,
     required int? totalSize,
-  })  : _writable = writable,
-        _resolvedName = resolvedName,
-        _totalSize = totalSize,
-        _isFsa = true,
-        _buffer = null,
-        _mimeType = null;
+  }) : _writable = writable,
+       _resolvedName = resolvedName,
+       _totalSize = totalSize,
+       _isFsa = true,
+       _buffer = null,
+       _mimeType = null;
 
   /// Creates an in-memory buffer sink that downloads on [close].
   WebFileSaverSink.buffer({
     required String resolvedName,
     required String mimeType,
     required int? totalSize,
-  })  : _writable = null,
-        _resolvedName = resolvedName,
-        _totalSize = totalSize,
-        _isFsa = false,
-        _buffer = [],
-        _mimeType = mimeType;
+  }) : _writable = null,
+       _resolvedName = resolvedName,
+       _totalSize = totalSize,
+       _isFsa = false,
+       _buffer = [],
+       _mimeType = mimeType;
 
   final FileSystemWritableFileStream? _writable;
   final List<int>? _buffer;
@@ -85,12 +85,17 @@ class WebFileSaverSink implements FileSaverSink {
     if (_isFsa) {
       // Chain writes sequentially via promise queue.
       final bytes = Uint8List.fromList(data);
-      _writeQueue = _writeQueue.then((_) async {
-        await _writable!.write(bytes.toJS as FileSystemWriteChunkType).toDart;
-        _trackBytes(bytes.length);
-      }).catchError((Object e, StackTrace st) {
-        if (!_doneCompleter.isCompleted) _doneCompleter.completeError(e, st);
-      });
+      _writeQueue = _writeQueue
+          .then((_) async {
+            await _writable!
+                .write(bytes.toJS as FileSystemWriteChunkType)
+                .toDart;
+            _trackBytes(bytes.length);
+          })
+          .catchError((Object e, StackTrace st) {
+            if (!_doneCompleter.isCompleted)
+              _doneCompleter.completeError(e, st);
+          });
     } else {
       _buffer!.addAll(data);
       _trackBytes(data.length);
