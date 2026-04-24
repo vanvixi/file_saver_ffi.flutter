@@ -93,8 +93,9 @@ class WebFileSaverSink implements FileSaverSink {
             _trackBytes(bytes.length);
           })
           .catchError((Object e, StackTrace st) {
-            if (!_doneCompleter.isCompleted)
+            if (!_doneCompleter.isCompleted) {
               _doneCompleter.completeError(e, st);
+            }
           });
     } else {
       _buffer!.addAll(data);
